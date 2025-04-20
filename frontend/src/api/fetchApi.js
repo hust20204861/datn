@@ -112,6 +112,16 @@ export const Signup = async ({name, username, password}) => {
     }
   }
 
+  export const getProjectHistory = async(projectId) => {
+    try{
+      const data = await fetchApi(`/api/v1/project/${projectId}/histories`)
+      return data;
+    }catch(error){
+        console.error('comment error:', error.message);
+        throw error;
+    }
+  }
+
   export const getMembersOfProject = async(projectId) => {
     try{
         const data = await fetchApi(`/api/v1/project/${projectId}/members`);

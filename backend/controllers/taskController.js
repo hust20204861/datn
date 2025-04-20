@@ -1,4 +1,6 @@
 const TaskModel = require("../models/taskModel");
+const HistoryModel = require("../models/historyModel");
+
 //hàm tạo task cho project
 exports.createTask = async (req, res) => {
   try {
@@ -14,6 +16,7 @@ exports.createTask = async (req, res) => {
       endAt,
       dependencies,
     } = req.body;
+
     const newTask = new TaskModel({
       projectId,
       name,
@@ -26,8 +29,22 @@ exports.createTask = async (req, res) => {
       endAt,
       dependencies,
     });
-    //lưu vào cơ sở dữ liệu
+
     await newTask.save();
+
+    const previosState = null
+    const newState = newTask.toObject()
+
+    await saveHistory({
+      entityId: newTask._id,
+      entityType: "task",
+      changeType: "createTask",
+      changedBy: req.userAuth._id,
+      previousState: previosState,
+      newState: newState,
+      changedAt: Date.now()
+    })
+
     //truy xuất vào task đã lưu bằng id và liên kết với thông tin người dùng, lấy thông tin trừ password, sau đó trả ra kết quả
     await TaskModel.findById(newTask._id);
     return res.json({
@@ -150,6 +167,8 @@ exports.updateTask = async (req, res) => {
       });
     }
 
+    const previousState = task.toObject();
+
     task.locked = true;
     await task.save();
 
@@ -174,6 +193,16 @@ exports.updateTask = async (req, res) => {
 
     task.locked = false;
     await task.save();
+
+    await saveHistory({
+      entityId: task._id,
+      entityType: "task",
+      changeType: "updateStatus",
+      changedBy: req.userAuth._id,
+      previousState: previousState,
+      newState: task.toObject(),
+      changedAt: Date.now()
+    })
 
     req.io.to(taskId).emit("task-updated-status", {
       taskId: task._id,
@@ -200,10 +229,11 @@ exports.updateTaskDependencies = async (req, res) => {
     const { dependencies } = req.body;
     const task = await TaskModel.findById(taskId);
 
+    const previousState = task.toObject();
+
     const dependentTasks = await TaskModel.find({ _id: { $in: dependencies } });
 
     for (const depTask of dependentTasks) {
-      console.log(depTask, task);
       if (new Date(depTask.endAt) >= new Date(task.startAt)) {
         return res.json({
           status: "failed",
@@ -215,6 +245,16 @@ exports.updateTaskDependencies = async (req, res) => {
     task.dependencies = dependencies;
 
     await task.save();
+
+    await saveHistory({
+      entityId: task._id,
+      entityType: "task",
+      changeType: "updateDependencies",
+      changedBy: req.userAuth._id,
+      previousState: previousState,
+      newState: task.toObject(),
+      changedAt: Date.now()
+    })
 
     req.io.to(taskId).emit("task-updated-dependencies", {
       taskId: task._id,
@@ -239,15 +279,25 @@ exports.updateTaskPriority = async (req, res) => {
   try {
     const { taskId } = req.params;
     const { priority } = req.body;
-    const task = await TaskModel.findByIdAndUpdate(
-      taskId,
-      {
-        priority,
-      },
-      {
-        new: true,
-      }
-    );
+    const task = await TaskModel.findByIdAndUpdate(taskId);
+
+    const previousState = task.toObject();
+
+    console.log("PREVIOUS STATE:", previousState);
+
+    task.priority = priority;
+
+    await task.save();
+
+    await saveHistory({
+      entityId: task._id,
+      entityType: "task",
+      changeType: "updatePriority",
+      changedBy: req.userAuth._id,
+      previousState: previousState,
+      newState: task.toObject(),
+      changedAt: Date.now()
+    })
 
     req.io.to(taskId).emit("task-updated-priority", {
       taskId: task._id,
@@ -272,14 +322,27 @@ exports.updateTaskAssignedTo = async (req, res) => {
   try {
     const { taskId } = req.params;
     const { assignedTo } = req.body;
-    const task = await TaskModel.findByIdAndUpdate(
-      taskId,
-      {
-        assignedTo,
-      },
-      {
-        new: true,
-      }
+
+    const task = await TaskModel.findByIdAndUpdate(taskId);
+
+    const previousState = task.toObject();
+
+    task.assignedTo = assignedTo;
+
+    await task.save();
+
+    await saveHistory({
+      entityId: task._id,
+      entityType: "task",
+      changeType: "updateAssignedTo",
+      changedBy: req.userAuth._id,
+      previousState: previousState,
+      newState: task.toObject(),
+      changedAt: Date.now()
+    })
+
+    const taskUpdated = await TaskModel.findById(
+      taskId
     )
       .populate({
         path: "assignedTo",
@@ -295,13 +358,13 @@ exports.updateTaskAssignedTo = async (req, res) => {
       });
 
     req.io.to(taskId).emit("task-updated-assignedTo", {
-      taskId: task._id,
-      assignedTo: task.assignedTo,
+      taskId: taskUpdated._id,
+      assignedTo: taskUpdated.assignedTo,
     });
     return res.json({
       status: "success",
       message: "Update Task Success",
-      task,
+      task: taskUpdated,
     });
   } catch (error) {
     console.error("Update Task Error:", error);
@@ -316,15 +379,23 @@ exports.updateTaskStartDate = async (req, res) => {
   try {
     const { taskId } = req.params;
     const { startAt } = req.body;
-    const task = await TaskModel.findByIdAndUpdate(
-      taskId,
-      {
-        startAt,
-      },
-      {
-        new: true,
-      }
-    );
+    const task = await TaskModel.findByIdAndUpdate(taskId);
+
+    const previousState = task.toObject();
+
+    task.startAt = startAt;
+
+    await task.save();
+
+    await saveHistory({
+      entityId: task._id,
+      entityType: "task",
+      changeType: "updateStartAt",
+      changedBy: req.userAuth._id,
+      previousState: previousState,
+      newState: task.toObject(),
+      changedAt: Date.now()
+    })
 
     req.io.to(taskId).emit("task-updated-startAt", {
       taskId: task._id,
@@ -357,9 +428,21 @@ exports.updateTaskEndDate = async (req, res) => {
       });
     }
 
+    const previousState = task.toObject();
+
     task.endAt = endAt;
 
     await task.save();
+
+    await saveHistory({
+      entityId: task._id,
+      entityType: "task",
+      changeType: "updateEndAt",
+      changedBy: req.userAuth._id,
+      previousState: previousState,
+      newState: task.toObject(),
+      changedAt: Date.now()
+    })
 
     req.io.to(taskId).emit("task-updated-endAt", {
       taskId: task._id,
@@ -430,3 +513,12 @@ exports.commentOnTask = async (req, res) => {
     .then(() => res.json({ error: null }))
     .catch((error) => res.json({ error }));
 };
+
+
+const saveHistory = async (data) => {
+
+  const history = new HistoryModel(data);
+
+  await history.save();
+}
+

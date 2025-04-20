@@ -373,6 +373,7 @@ import {
   updateTaskAssignedTo,
   updateTaskStartDate,
   updateTaskEndDate,
+  getProjectHistory
 } from "@/api/fetchApi";
 
 import emitter from "@/emitter";
@@ -477,6 +478,9 @@ export default {
               socket.emit("join-task", task._id);
             }
 
+            const projectHistories = await getProjectHistory(ev.projectId);
+
+            console.log(projectHistories);
             getDependenciesLine();
 
             break;

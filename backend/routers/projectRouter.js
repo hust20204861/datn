@@ -1,5 +1,5 @@
 const express = require('express');
-const { createProject, getProjects, getProjectDetails, updateProject, deleteProject, deleteAllProjects, getProjectsMember, getMembersOfProject } = require('../controllers/projectController')
+const { createProject, getProjectHistory, getProjects, getProjectDetails, updateProject, deleteProject, deleteAllProjects, getProjectsMember, getMembersOfProject } = require('../controllers/projectController')
 const isLogin = require('../middlewares/isLogin')
 const projectRouter = express.Router();
 
@@ -10,6 +10,8 @@ projectRouter.get('/:projectId', isLogin, getProjectDetails)
 projectRouter.put('/:projectId', isLogin, updateProject)
 projectRouter.delete('/:projectId', isLogin, deleteProject)
 projectRouter.get('/:projectId/members', isLogin, getMembersOfProject)
+projectRouter.get('/:projectId/histories', isLogin, getProjectHistory)
+
 
 
 module.exports = projectRouter;

@@ -1,4 +1,8 @@
 const ProjectModel = require("../models/projectModel");
+const HistoryModel = require("../models/historyModel");
+
+const mongoose = require('mongoose');
+
 
 exports.createProject = async (req, res) => {
     try{
@@ -222,4 +226,59 @@ exports.addMembersToProject = async (req, res) => {
   })
     .then((project) => res.json({ project, error: null }))
     .catch((error) => res.json({ error }));
+};
+
+
+exports.getProjectHistory = async (req, res) => {
+  try {
+    const { projectId } = req.params; 
+
+    const histories = await HistoryModel.find({ 
+      entityType: "task" 
+    })
+
+    const objectIdFromParams = new mongoose.Types.ObjectId(projectId);
+
+    const projectHistory = await HistoryModel.find({ 
+      "previousState.projectId": objectIdFromParams,
+      entityType: "task" 
+    })
+      .populate({
+        path: 'changedBy',
+        select: 'name username', 
+      })
+      .populate({
+        path: 'entityId', 
+        select: '_id name description status', 
+      })
+      // .populate({
+      //   path: 'newState.projectId', 
+      //   select: '_id name manager description',
+      //   populate: {
+      //     path: 'manager',
+      //     select: '_id name username',
+      //   },
+      // })
+      .sort({ changedAt: -1 }); 
+
+      console.log("HISTORY:",projectHistory);
+
+    if (!projectHistory || projectHistory.length === 0) {
+      return res.json({
+        status: "failed",
+        error: "No history found for tasks in this project",
+      });
+    }
+
+    return res.json({
+      status: "success",
+      projectHistory,
+    });
+  } catch (error) {
+    console.error("Get Project History Error:", error);
+    return res.json({
+      status: "failed",
+      error: "Error retrieving project history",
+    });
+  }
 };
