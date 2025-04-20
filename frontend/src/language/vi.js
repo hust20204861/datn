@@ -1,0 +1,22 @@
+export default {
+    1: 'Bảng điều khiển',
+    2: 'Dự án của bạn',
+    3: 'Công việc của bạn',
+    4: 'Đăng nhập',
+    5: 'Dự án mới',
+    6: 'Quản lý',
+    7: 'Thành viên',
+    8: 'Đăng xuất',
+    9: 'Chào mừng trở lại',
+    10: 'Tiếng Anh',
+    11: 'Tiếng Việt',
+    12: 'Tên đăng nhập',
+    13: 'Mật khẩu',
+    14: 'Đăng ký',
+    15: 'Tên người dùng',
+    16: 'Tạo tài khoản mới',
+    17: 'Danh sách công việc của bạn',
+    18: 'Tạo công việc mới',
+    19: 'Trở về trang đăng nhập',
+    20: 'Bạn chưa có tài khoản?'
+}
