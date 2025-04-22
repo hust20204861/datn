@@ -19,7 +19,7 @@
               class="w-full h-[40px] p-6 rounded-xl hover:bg-neutral-400"
             >
               <div class="w-full h-full flex justify-between items-center">
-                <p class="text-neutral-950">{{ history.newState.name }} is updated by {{ history.changedBy.name }} at {{ formatDate(history.changedAt) }}</p>
+                <p class="text-neutral-950">{{ history.newState.name }} is {{history.changeType}} by {{ history.changedBy.name }} at {{ formatDate(history.changedAt) }}</p>
                 <button
                   @click.prevent="rollBackHistory(history)"
                 >
@@ -467,6 +467,7 @@ export default {
       init();
 
       socket.on("task-updated-status", (data) => {
+        reloadHistory()
         tasks.value = tasks.value.map((task) => {
           if (task._id === data.taskId) {
             task.status = data.status;
@@ -475,6 +476,7 @@ export default {
         });
       });
       socket.on("task-updated-priority", (data) => {
+        reloadHistory()
         tasks.value = tasks.value.map((task) => {
           if (task._id === data.taskId) {
             task.priority = data.priority;
@@ -483,6 +485,7 @@ export default {
         });
       });
       socket.on("task-updated-dependencies", (data) => {
+        reloadHistory()
         tasks.value = tasks.value.map((task) => {
           if (task._id === data.taskId) {
             task.dependencies = data.dependencies;
@@ -491,6 +494,7 @@ export default {
         });
       });
       socket.on("task-updated-assignedTo", (data) => {
+        reloadHistory()
         tasks.value = tasks.value.map((task) => {
           if (task._id === data.taskId) {
             task.assignedTo = data.assignedTo;
@@ -499,6 +503,7 @@ export default {
         });
       });
       socket.on("task-updated-startAt", (data) => {
+        reloadHistory()
         tasks.value = tasks.value.map((task) => {
           if (task._id === data.taskId) {
             task.startAt = data.startAt;
@@ -507,6 +512,7 @@ export default {
         });
       });
       socket.on("task-updated-endAt", (data) => {
+        reloadHistory()
         tasks.value = tasks.value.map((task) => {
           if (task._id === data.taskId) {
             task.endAt = data.endAt;
@@ -541,7 +547,6 @@ export default {
               projectHistories.value = history.projectHistory;
             }
 
-            console.log(projectHistories.value);
             getDependenciesLine();
 
             break;
@@ -607,6 +612,12 @@ export default {
         }
         const dataTasks = await getProjectTask(projectId.value);
 
+        const history = await getProjectHistory(projectId.value);
+
+        if(history.status === "success"){
+          projectHistories.value = history.projectHistory;
+        }
+
         tasks.value = dataTasks.tasks;
       } catch (error) {
         console.error("Error updating task:", error.message);
@@ -615,7 +626,23 @@ export default {
 
     const UpdateTaskPriority = async (taskId, priority) => {
       try {
+        console.log(taskId, priority)
         const data = await updateTaskPriority({ taskId, priority });
+
+        if (data.status === "failed") {
+          emitter.emit("NOTIFICATION", data);
+
+          const dataTasks = await getProjectTask(projectId.value);
+
+          tasks.value = dataTasks.tasks;
+          return;
+        }
+
+        const history = await getProjectHistory(projectId.value);
+
+        if(history.status === "success"){
+          projectHistories.value = history.projectHistory;
+        }
         console.log(data);
       } catch (error) {
         console.error("Error updating task:", error.message);
@@ -624,6 +651,7 @@ export default {
 
     const UpdateTaskDependencies = async (taskId, dependencies) => {
       try {
+        console.log(taskId,typeof taskId, dependencies, typeof dependencies)
         const data = await updateTaskDependencies({ taskId, dependencies });
 
         if (data.status === "failed") {
@@ -635,6 +663,12 @@ export default {
           return;
         }
         const dataTasks = await getProjectTask(projectId.value);
+
+        const history = await getProjectHistory(projectId.value);
+
+        if(history.status === "success"){
+          projectHistories.value = history.projectHistory;
+        }
 
         tasks.value = dataTasks.tasks;
       } catch (error) {
@@ -648,7 +682,22 @@ export default {
         const data = await updateTaskAssignedTo({ taskId, assignedTo });
         console.log(data);
 
+        if (data.status === "failed") {
+          emitter.emit("NOTIFICATION", data);
+
+          const dataTasks = await getProjectTask(projectId.value);
+
+          tasks.value = dataTasks.tasks;
+          return;
+        }
+
         const dataTasks = await getProjectTask(projectId.value);
+
+        const history = await getProjectHistory(projectId.value);
+
+        if(history.status === "success"){
+          projectHistories.value = history.projectHistory;
+        }
 
         tasks.value = dataTasks.tasks;
       } catch (error) {
@@ -674,11 +723,25 @@ export default {
         }
         const dataTasks = await getProjectTask(projectId.value);
 
+        const history = await getProjectHistory(projectId.value);
+
+        if(history.status === "success"){
+          projectHistories.value = history.projectHistory;
+        }
+
         tasks.value = dataTasks.tasks;
       } catch (error) {
         console.error("Error updating task:", error.message);
       }
     };
+
+    const reloadHistory = async() => {
+      const history = await getProjectHistory(projectId.value);
+
+      if(history.status === "success"){
+        projectHistories.value = history.projectHistory;
+      }
+    }
 
     const UpdateTaskEndDate = async (taskId, endAt) => {
       const endAtDate = new Date(endAt);
@@ -696,6 +759,12 @@ export default {
           return;
         }
         const dataTasks = await getProjectTask(projectId.value);
+
+        const history = await getProjectHistory(projectId.value);
+
+        if(history.status === "success"){
+          projectHistories.value = history.projectHistory;
+        }
 
         tasks.value = dataTasks.tasks;
       } catch (error) {
@@ -853,29 +922,31 @@ export default {
     };
 
     const rollBackHistory = async(history) => {
-      const type = history.changeType
-      switch(type){
-        case 'updateStatus':
-          updateTaskStatus(history.entityId, history.previousState.status)
-          break
-        case 'updateDependencies':
-          updateTaskDependencies(history.entityId, history.previousState.dependencies)
-          break
-        case 'updatePriority':
-          updateTaskPriority(history.entityId, history.previousState.priority)
-          break
-        case 'updateAssignedTo':
-          updateTaskAssignedTo(history.entityId, history.previousState.assignedTo)
-          break
-        case 'updateStartAt':
-          updateTaskStartDate(history.entityId, history.previousState.startAt)
-          break
-        case 'updateEndAt':
-          updateTaskEndDate(history.entityId, history.previousState.endAt)
-          break
+      if(isManager.value || history.newState.assignedTo.some(id => id === userId)){
+        const type = history.changeType
+        console.log(type)
+        switch(type){
+          case 'updateStatus':
+            updateTaskStatus(history.entityId, history.previousState.status)
+            break
+          case 'updateDependencies':
+            UpdateTaskDependencies(history.entityId, history.previousState.dependencies)
+            break
+          case 'updatePriority':
+            UpdateTaskPriority(history.entityId, history.previousState.priority)
+            break
+          case 'updateAssignedTo':
+            UpdateTaskAssignedTo(history.entityId, history.previousState.assignedTo)
+            break
+          case 'updateStartAt':
+            UpdateTaskStartDate(history.entityId, history.previousState.startAt)
+            break
+          case 'updateEndAt':
+            UpdateTaskEndDate(history.entityId, history.previousState.endAt)
+            break
 
+        }
       }
-      console.log(history)
     }
 
     return {

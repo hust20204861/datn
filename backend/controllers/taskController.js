@@ -32,18 +32,18 @@ exports.createTask = async (req, res) => {
 
     await newTask.save();
 
-    const previosState = null
-    const newState = newTask.toObject()
+    // const previosState = null
+    // const newState = newTask.toObject()
 
-    await saveHistory({
-      entityId: newTask._id,
-      entityType: "task",
-      changeType: "createTask",
-      changedBy: req.userAuth._id,
-      previousState: previosState,
-      newState: newState,
-      changedAt: Date.now()
-    })
+    // await saveHistory({
+    //   entityId: newTask._id,
+    //   entityType: "task",
+    //   changeType: "createTask",
+    //   changedBy: req.userAuth._id,
+    //   previousState: previosState,
+    //   newState: newState,
+    //   changedAt: Date.now()
+    // })
 
     //truy xuất vào task đã lưu bằng id và liên kết với thông tin người dùng, lấy thông tin trừ password, sau đó trả ra kết quả
     await TaskModel.findById(newTask._id);
@@ -52,6 +52,7 @@ exports.createTask = async (req, res) => {
       message: "Create task success",
     });
   } catch (error) {
+    console.error("Create task error:", error);
     return res.json({
       status: "failed",
       error: "Create task failed",
