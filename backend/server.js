@@ -32,7 +32,7 @@ io.on("connection", (socket) => {
   });
 });
 
-cron.schedule("*/10 * * * * *", async () => {
+cron.schedule("*/15 * * * *", async () => {
   const currentDate = new Date();
   const tasksToCheck = await TaskModel.find({
     status: { $ne: "DONE" },

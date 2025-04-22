@@ -1,6 +1,6 @@
 <template>
   <div class="w-full h-full mx-auto p-4 overflow-hidden overflow-y-auto">
-    <div class="flex items-center justify-start">
+    <div class="flex items-center justify-between">
       <button @click.prevent="closeTask" class="p-3">
         <IconArrowLeft size="30" class="text-neutral-950" />
       </button>
@@ -8,6 +8,29 @@
       <h1 class="text-2xl text-center m-0 font-semibold mb-4">
         Project Task Timeline
       </h1>
+
+      <button @click.prevent="showHistory" class="p-3 relative">
+        <IconHistory size="30" class="text-neutral-950" />
+        <template v-if="onShowHistory">
+          <div class="w-[600px] max-h-[400px] overflow-y-auto rounded-xl border bg-white absolute top-10 right-0 z-[50] transition-all duration-300">
+            <div
+              v-for="(history) in projectHistories"
+              :key="history._id"
+              class="w-full h-[40px] p-6 rounded-xl hover:bg-neutral-400"
+            >
+              <div class="w-full h-full flex justify-between items-center">
+                <p class="text-neutral-950">{{ history.newState.name }} is updated by {{ history.changedBy.name }} at {{ formatDate(history.changedAt) }}</p>
+                <button
+                  @click.prevent="rollBackHistory(history)"
+                >
+                 <IconArrowBackUp size="20" class="text-neutral-950" />
+                </button>
+              </div>
+              
+            </div>
+          </div>
+        </template>
+      </button>
     </div>
 
     <div class="task-list mb-8">
@@ -34,16 +57,17 @@
           >
             <td
               class="px-4 py-2 border-b border-r"
-              @click.prevent="taskDetails(task._id)"
+              @click.prevent="taskDetails(task)"
             >
               {{ task.name }}
             </td>
             <td class="px-4 py-2 border-b border-r">
-              <select
+              <select 
+                v-if="isManager || task.assignedTo.some(user => user._id === userId)"
                 v-model="task.status"
                 class="bg-inherit focus:outline-none"
                 :class="{
-                  'text-red-500': task.status === 'TODO',
+                  'text-neutral-600': task.status === 'TODO',
                   'text-green-500': task.status === 'DONE',
                   'text-blue-500': task.status === 'IN_PROGRESS',
                 }"
@@ -53,6 +77,17 @@
                 <option value="IN_PROGRESS">IN_PROGRESS</option>
                 <option value="DONE">DONE</option>
               </select>
+              <div
+                v-else
+                class="bg-inherit focus:outline-none"
+                :class="{
+                  'text-neutral-600': task.status === 'TODO',
+                  'text-green-400': task.status === 'DONE',
+                  'text-blue-900': task.status === 'IN_PROGRESS',
+                }"
+              >
+                {{ task.status }}
+              </div>
             </td>
 
             <td class="px-4 py-2 border-b border-r">
@@ -177,9 +212,9 @@
                 v-model="task.priority"
                 class="bg-inherit focus:outline-none"
                 :class="{
-                  'text-red-500': task.priority === 'HIGH',
-                  'text-green-500': task.priority === 'LOW',
-                  'text-blue-500': task.priority === 'MEDIUM',
+                  'text-danger-500': task.priority === 'HIGH',
+                  'text-warning-400': task.priority === 'LOW',
+                  'text-warning-900': task.priority === 'MEDIUM',
                 }"
                 @change="UpdateTaskPriority(task._id, task.priority)"
               >
@@ -191,9 +226,9 @@
                 v-else
                 class="bg-inherit focus:outline-none"
                 :class="{
-                  'text-red-500': task.priority === 'HIGH',
-                  'text-green-500': task.priority === 'LOW',
-                  'text-blue-500': task.priority === 'MEDIUM',
+                  'text-danger-500': task.priority === 'HIGH',
+                  'text-warning-400': task.priority === 'LOW',
+                  'text-warning-900': task.priority === 'MEDIUM',
                 }"
               >
                 {{ task.priority }}
@@ -224,7 +259,7 @@
     <div class="timeline">
       <div class="justify-between flex items-center">
         <h2 class="text-xl font-semibold mb-4">Task Timeline</h2>
-        <button @click.prevent="onShowFilter" class="p-3 relative">
+        <!-- <button @click.prevent="onShowFilter" class="p-3 relative">
           <IconFilter size="30" class="text-neutral-950" />
           <div
             v-show="onShow"
@@ -249,7 +284,7 @@
               Status
             </button>
           </div>
-        </button>
+        </button> -->
       </div>
       <div
         class="timeline-container relative w-full h-[600px] border border-gray-300 bg-gray-100 overflow-x-auto overflow-y-auto"
@@ -345,15 +380,29 @@
         <div
           v-for="task in tasks"
           :key="task._id"
-          class="absolute h-8 rounded-md text-white text-center leading-8 overflow-hidden"
+          class="absolute h-8 rounded-md text-white text-center leading-8 overflow-visible"
           :style="getTimelineStyle(task)"
         >
-          <div v-if="filter === 1" class="px-2 font-bold">{{ task.name }}</div>
-          <div v-if="filter === 2" class="px-2 font-bold">
-            {{ task.assignedTo.map((user) => user.name).join(", ") }}
-          </div>
-          <div v-if="filter === 3" class="px-2 font-bold">
-            {{ task.status }}
+        <div class="w-full h-full relative group" @click.prevent="taskDetails(task)">
+          <div class="px-2 font-bold group-hover:text-neutral-600">{{ task.name }}</div>
+            <div 
+              class="absolute top-8 right-0 translate-x-1/2 rounded-lg border border-neutral-500 p-5 shadow-lg transform z-[1000] transition-opacity duration-300 opacity-0 group-hover:opacity-100"
+              :class="{
+                    'bg-neutral-500': task.status === 'TODO',
+                    'bg-green-500': task.status === 'DONE',
+                    'bg-blue-500': task.status === 'IN_PROGRESS',
+                  }"
+              >
+              <p class="text-white text-center">
+                Name: {{ task.name }}
+              </p>
+              <p class="text-white text-center">
+                Status: {{ task.status }}
+              </p>
+              <p class="text-white text-center">
+                AssignedTo: {{ task.assignedTo.map((user) => user.name).join(", ") }}
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -378,7 +427,7 @@ import {
 
 import emitter from "@/emitter";
 
-import { IconArrowLeft, IconFilter, IconPlus } from "@tabler/icons-vue";
+import { IconArrowLeft, IconFilter, IconPlus, IconHistory, IconArrowBackUp } from "@tabler/icons-vue";
 
 import socket from "@/api/socket";
 
@@ -387,6 +436,8 @@ export default {
     IconArrowLeft,
     IconFilter,
     IconPlus,
+    IconHistory,
+    IconArrowBackUp
   },
   setup() {
     const dropdownOpen = ref({});
@@ -400,12 +451,16 @@ export default {
 
     const tasks = ref([]);
 
+    const userId = localStorage.getItem('userID')
+
     const projectId = ref([]);
     const projectDetails = ref();
+    const projectHistories = ref([]);
 
     const users = ref([]);
 
     const onShow = ref(false);
+    const onShowHistory = ref(false);
     const filter = ref(1);
 
     onMounted(async () => {
@@ -474,13 +529,19 @@ export default {
             projectDetails.value = pj;
             tasks.value = data.tasks;
 
+            console.log(tasks.value);
+
             for (let task of tasks.value) {
               socket.emit("join-task", task._id);
             }
 
-            const projectHistories = await getProjectHistory(ev.projectId);
+            const history = await getProjectHistory(ev.projectId);
 
-            console.log(projectHistories);
+            if(history.status === "success"){
+              projectHistories.value = history.projectHistory;
+            }
+
+            console.log(projectHistories.value);
             getDependenciesLine();
 
             break;
@@ -603,7 +664,14 @@ export default {
           startAt: startAtDate.toISOString(),
         });
         console.log(data);
+        if (data.status === "failed") {
+          emitter.emit("NOTIFICATION", data);
 
+          const dataTasks = await getProjectTask(projectId.value);
+
+          tasks.value = dataTasks.tasks;
+          return;
+        }
         const dataTasks = await getProjectTask(projectId.value);
 
         tasks.value = dataTasks.tasks;
@@ -693,9 +761,9 @@ export default {
         top: `${style.top}px`,
         backgroundColor:
           task.priority === "LOW"
-            ? "#00AB72"
+            ? "#F1C617"
             : task.priority === "MEDIUM"
-            ? "#0092FE"
+            ? "#F26B00"
             : "#EF3361",
       };
     };
@@ -767,16 +835,48 @@ export default {
       const hours = String(d.getHours()).padStart(2, "0");
       const minutes = String(d.getMinutes()).padStart(2, "0");
 
-      return `${day}/${month}/${year} ${hours}:${minutes}`;
+      return `${hours}:${minutes} ${day}/${month}/${year}`;
     };
 
-    const taskDetails = (taskId) => {
-      emitter.emit("TASK_DETAILS", taskId);
+    const taskDetails = (task) => {
+      if(isManager.value || task.assignedTo.some(user => user._id === userId)){
+        emitter.emit("TASK_DETAILS", {taskId: task._id});
+      }
     };
 
     const closeTask = () => {
       emitter.emit("CLOSE_PJ_MANAGER");
     };
+
+    const showHistory = () => {
+      onShowHistory.value = !onShowHistory.value;
+    };
+
+    const rollBackHistory = async(history) => {
+      const type = history.changeType
+      switch(type){
+        case 'updateStatus':
+          updateTaskStatus(history.entityId, history.previousState.status)
+          break
+        case 'updateDependencies':
+          updateTaskDependencies(history.entityId, history.previousState.dependencies)
+          break
+        case 'updatePriority':
+          updateTaskPriority(history.entityId, history.previousState.priority)
+          break
+        case 'updateAssignedTo':
+          updateTaskAssignedTo(history.entityId, history.previousState.assignedTo)
+          break
+        case 'updateStartAt':
+          updateTaskStartDate(history.entityId, history.previousState.startAt)
+          break
+        case 'updateEndAt':
+          updateTaskEndDate(history.entityId, history.previousState.endAt)
+          break
+
+      }
+      console.log(history)
+    }
 
     return {
       dropdownOpen,
@@ -784,6 +884,7 @@ export default {
       isManager,
       tasks,
       users,
+      userId,
       projectDetails,
       getTimelineStyle,
       dependencies,
@@ -807,6 +908,10 @@ export default {
       onShowFilter,
       filter,
       onShow,
+      showHistory,
+      onShowHistory,
+      projectHistories,
+      rollBackHistory
     };
   },
 };

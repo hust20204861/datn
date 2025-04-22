@@ -213,7 +213,7 @@ export default {
                 switch (type) {
                     case 'TASK_DETAILS':
                       console.log(ev)
-                        taskDetail(ev)
+                        taskDetail(ev.taskId)
                         break
 
                 }

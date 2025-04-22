@@ -381,6 +381,13 @@ exports.updateTaskStartDate = async (req, res) => {
     const { startAt } = req.body;
     const task = await TaskModel.findByIdAndUpdate(taskId);
 
+    if(new Date(startAt) >= new Date(task.endAt)){
+      return res.json({
+        status: "failed",
+        error: `Task StartDate must be greater than EndDate`,
+      });
+    }
+
     const previousState = task.toObject();
 
     task.startAt = startAt;
@@ -426,6 +433,14 @@ exports.updateTaskEndDate = async (req, res) => {
         status: "failed",
         error: `Task EndDate must be greater than StartDate`,
       });
+    }
+
+    const today = new Date(); 
+    today.setHours(0, 0, 0, 0); 
+    const endAtDate = new Date(endAt); 
+
+    if (endAtDate > today) {
+      task.isOverdue = false;
     }
 
     const previousState = task.toObject();
