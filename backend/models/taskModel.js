@@ -49,6 +49,10 @@ const taskSchema = new mongoose.Schema(
         ref: "Task",
       },
     ],
+    parentTask: {   
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Task",
+    },
   },
   {
     timestamps: true,

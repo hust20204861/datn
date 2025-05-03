@@ -12,6 +12,7 @@
         </div>
 
         <ProjectDashBoardManager v-show="activeTab == 2"/>
+        <!-- <CreateGroupModal/> -->
     </div>
 </template>
 
@@ -35,7 +36,8 @@ export default {
         IconHourglassEmpty,
         IconTrash,
         Notification,
-        ProjectDashBoardManager
+        ProjectDashBoardManager,
+        // CreateGroupModal
     },
     setup(props) {
         const pjId = ref('')

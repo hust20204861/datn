@@ -273,3 +273,93 @@ export const Signup = async ({name, username, password}) => {
         throw error;
     }
   }
+
+export const CreateGroup = async({name, description, projectId}) => {
+  try{
+    const data = await fetchApi('/api/v1/project/group/create', 'POST', { name, description, projectId })
+    return data;
+  }catch(error){
+      console.error('group error:', error.message);
+      throw error;
+  }
+}
+
+export const AddMemberToGroup = async({groupId, userIds}) => {
+  try{
+    console.log("USER IDS",groupId, userIds)
+    const data = await fetchApi(`/api/v1/project/group/${groupId}/addMember`, 'POST', { groupId,userIds })
+    return data;
+  }catch(error){
+      console.error('group error:', error.message);
+      throw error;
+  }
+}
+
+export const RemoveMemberFromGroup = async({groupId, userId}) => {
+  try{
+    const data = await fetchApi(`/api/v1/project/group/${groupId}/removeMember`, 'POST', { userId })
+    return data;
+  }catch(error){
+      console.error('group error:', error.message);
+      throw error;
+  }
+}
+
+export const SelectGroupLeader = async({groupId, userId}) => {
+  try{
+    const data = await fetchApi(`/api/v1/project/group/${groupId}/selectLeader`, 'POST', { userId })
+    return data;
+  }catch(error){
+      console.error('group error:', error.message);
+      throw error;
+  }
+}
+export const GetGroupDetails = async({groupId}) => {
+  try{
+    const data = await fetchApi(`/api/v1/project/group/${groupId}`)
+    return data;
+  }catch(error){
+      console.error('group error:', error.message);
+      throw error;
+  }
+}
+
+export const GetGroupMembers = async({groupId}) => {
+  try{
+    const data = await fetchApi(`/api/v1/project/group/${groupId}/members`)
+    return data;
+  }catch(error){
+      console.error('group error:', error.message);
+      throw error;
+  }
+}
+
+export const UpdateGroup = async({groupId, name, description}) => {
+  try{
+    const data = await fetchApi(`/api/v1/project/group/${groupId}`, 'PUT', { name, description })
+    return data;
+  }catch(error){
+      console.error('group error:', error.message);
+      throw error;
+  }
+}
+
+export const DeleteGroup = async({groupId}) => {
+  try{
+    const data = await fetchApi(`/api/v1/project/group/${groupId}`, 'DELETE')
+    return data;
+  }catch(error){
+      console.error('group error:', error.message);
+      throw error;
+  }
+}
+
+export const GetGroupsOfProject = async({projectId}) => {
+  try{
+    const data = await fetchApi(`/api/v1/project/${projectId}/groups`)
+    return data;
+  }catch(error){
+      console.error('group error:', error.message);
+      throw error;
+  }
+}

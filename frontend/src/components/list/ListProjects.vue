@@ -47,7 +47,7 @@ export default {
         Notification,
         TaskComponent,
         ProjectManager,
-        TaskDetailsVue
+        TaskDetailsVue,
     },
     setup(props) {
         const onTask = ref(false);

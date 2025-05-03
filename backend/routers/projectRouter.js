@@ -1,5 +1,27 @@
 const express = require('express');
-const { createProject, getProjectHistory, getProjects, getProjectDetails, updateProject, deleteProject, deleteAllProjects, getProjectsMember, getMembersOfProject } = require('../controllers/projectController')
+const { 
+    createProject, 
+    getProjectHistory, 
+    getProjects, 
+    getProjectDetails, 
+    updateProject, 
+    deleteProject, 
+    deleteAllProjects, 
+    getProjectsMember, 
+    getMembersOfProject 
+} = require('../controllers/projectController')
+
+const { 
+    createGroup, 
+    addMemberToGroup,
+    removeMemberFromGroup,
+    getGroupDetails,
+    getGroupMembers,
+    updateGroup,
+    deleteGroup,
+    selectGroupLeader,
+    getGroupsOfProject
+} = require('../controllers/groupController')
 const isLogin = require('../middlewares/isLogin')
 const projectRouter = express.Router();
 
@@ -12,6 +34,14 @@ projectRouter.delete('/:projectId', isLogin, deleteProject)
 projectRouter.get('/:projectId/members', isLogin, getMembersOfProject)
 projectRouter.get('/:projectId/histories', isLogin, getProjectHistory)
 
-
+projectRouter.post('/group/create', isLogin, createGroup)
+projectRouter.get('/group/:groupId', isLogin, getGroupDetails)
+projectRouter.get('/group/:groupId/members', isLogin, getGroupMembers)
+projectRouter.put('/group/:groupId', isLogin, updateGroup)
+projectRouter.delete('/group/:groupId', isLogin, deleteGroup)
+projectRouter.post('/group/:groupId/selectLeader', isLogin, selectGroupLeader)
+projectRouter.post('/group/:groupId/addMember', isLogin, addMemberToGroup)  
+projectRouter.post('/group/:groupId/removeMember', isLogin, removeMemberFromGroup)
+projectRouter.get('/:projectId/groups', isLogin, getGroupsOfProject)
 
 module.exports = projectRouter;

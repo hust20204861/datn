@@ -9,28 +9,53 @@
         Project Task Timeline
       </h1>
 
-      <button @click.prevent="showHistory" class="p-3 relative">
-        <IconHistory size="30" class="text-neutral-950" />
-        <template v-if="onShowHistory">
-          <div class="w-[600px] max-h-[400px] overflow-y-auto rounded-xl border bg-white absolute top-10 right-0 z-[50] transition-all duration-300">
-            <div
-              v-for="(history) in projectHistories"
-              :key="history._id"
-              class="w-full h-[40px] p-6 rounded-xl hover:bg-neutral-400"
-            >
-              <div class="w-full h-full flex justify-between items-center">
-                <p class="text-neutral-950">{{ history.newState.name }} is {{history.changeType}} by {{ history.changedBy.name }} at {{ formatDate(history.changedAt) }}</p>
-                <button
-                  @click.prevent="rollBackHistory(history)"
-                >
-                 <IconArrowBackUp size="20" class="text-neutral-950" />
-                </button>
+      <div class="flex items-center justify-end">
+        <button @click.prevent="showNotice" class="p-3 relative">
+          <IconBell size="30" class="text-neutral-950" />
+          <template v-if="onShowNotice">
+            <div class="w-[600px] max-h-[400px] overflow-y-auto rounded-xl border bg-white absolute top-10 right-0 z-[50] transition-all duration-300">
+              <div
+                v-for="(history) in projectHistories"
+                :key="history._id"
+                class="w-full h-[40px] p-6 rounded-xl hover:bg-neutral-400"
+              >
+                <div class="w-full h-full flex justify-between items-center">
+                  <p class="text-neutral-950">{{ history.newState.name }} is {{history.changeType}} by {{ history.changedBy.name }} at {{ formatDate(history.changedAt) }}</p>
+                  <button
+                    @click.prevent="rollBackHistory(history)"
+                  >
+                  <IconArrowBackUp size="20" class="text-neutral-950" />
+                  </button>
+                </div>
+                
               </div>
-              
             </div>
-          </div>
-        </template>
-      </button>
+          </template>
+        </button>
+        <button @click.prevent="showHistory" class="p-3 relative">
+          <IconHistory size="30" class="text-neutral-950" />
+          <template v-if="onShowHistory">
+            <div class="w-[600px] max-h-[400px] overflow-y-auto rounded-xl border bg-white absolute top-10 right-0 z-[50] transition-all duration-300">
+              <div
+                v-for="(history) in projectHistories"
+                :key="history._id"
+                class="w-full h-[40px] p-6 rounded-xl hover:bg-neutral-400"
+              >
+                <div class="w-full h-full flex justify-between items-center">
+                  <p class="text-neutral-950">{{ history.newState.name }} is {{history.changeType}} by {{ history.changedBy.name }} at {{ formatDate(history.changedAt) }}</p>
+                  <button
+                    @click.prevent="rollBackHistory(history)"
+                  >
+                  <IconArrowBackUp size="20" class="text-neutral-950" />
+                  </button>
+                </div>
+                
+              </div>
+            </div>
+          </template>
+        </button>
+      </div>
+      
     </div>
 
     <div class="task-list mb-8">
@@ -427,7 +452,7 @@ import {
 
 import emitter from "@/emitter";
 
-import { IconArrowLeft, IconFilter, IconPlus, IconHistory, IconArrowBackUp } from "@tabler/icons-vue";
+import { IconArrowLeft, IconFilter, IconPlus, IconHistory, IconArrowBackUp, IconBell } from "@tabler/icons-vue";
 
 import socket from "@/api/socket";
 
@@ -437,7 +462,8 @@ export default {
     IconFilter,
     IconPlus,
     IconHistory,
-    IconArrowBackUp
+    IconArrowBackUp,
+    IconBell
   },
   setup() {
     const dropdownOpen = ref({});
@@ -461,6 +487,7 @@ export default {
 
     const onShow = ref(false);
     const onShowHistory = ref(false);
+    const onShowNotice = ref(false);
     const filter = ref(1);
 
     onMounted(async () => {
@@ -921,6 +948,10 @@ export default {
       onShowHistory.value = !onShowHistory.value;
     };
 
+    const showNotice = () => {
+      onShowNotice.value = !onShowNotice.value;
+    };
+
     const rollBackHistory = async(history) => {
       if(isManager.value || history.newState.assignedTo.some(id => id === userId)){
         const type = history.changeType
@@ -982,7 +1013,9 @@ export default {
       showHistory,
       onShowHistory,
       projectHistories,
-      rollBackHistory
+      rollBackHistory,
+      onShowNotice,
+      showNotice
     };
   },
 };

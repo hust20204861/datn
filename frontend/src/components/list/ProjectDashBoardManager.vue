@@ -63,6 +63,47 @@
     ></canvas>
 
     <h2 class="text-xl font-semibold text-center mt-10">Project Members</h2>
+    <button @click.prevent="showCreateGroupModal">
+      create group
+    </button>
+
+    <div v-for="(group, index) in groupsProject" :key="index">
+      <table
+      class="min-w-full table-auto border-collapse border border-gray-300 mt-4 mx-auto"
+    >
+      <thead>
+        <tr class="bg-gray-100">
+          <th class="px-4 py-2 border-b text-left">{{ group.name }}</th>
+          <th class="px-4 py-2 border-b text-left">Name</th>
+          <th class="px-4 py-2 border-b text-left">Username</th>
+          <th class="px-4 py-2 border-b text-left">Position</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          v-for="(member, index) in group.members"
+          :key="member._id"
+          class="odd:bg-white even:bg-gray-50"
+        >
+          <td class="px-4 py-2 border-b">{{ index+1 }}</td>
+          <td class="px-4 py-2 border-b">{{ member.name }}</td>
+          <td class="px-4 py-2 border-b">{{ member.username }}</td>
+          <td class="px-4 py-2 border-b">{{ member.role || "Thành viên" }}</td>
+        </tr>
+        <tr class="odd:bg-white even:bg-gray-50">
+          <td class="px-4 py-2 border-b">
+            <button @click.prevent="showAddMembersToGroupModal(group._id)"  class="w-full h-full flex justify-start item-center">
+              <IconPlus size="20" class="mr-2" />
+              <p>Add Member</p>
+            </button>
+          </td>
+          <td class="px-4 py-2 border-b">None</td>
+          <td class="px-4 py-2 border-b">None</td>
+          <td class="px-4 py-2 border-b">None</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
     <table
       class="min-w-full table-auto border-collapse border border-gray-300 mt-4 mx-auto"
     >
@@ -114,7 +155,11 @@ import {
 } from "chart.js";
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import emitter from "@/emitter";
-import { getProjectTask, getMembersOfProject } from "@/api/fetchApi";
+import { 
+  getProjectTask, 
+  getMembersOfProject,
+  GetGroupsOfProject
+} from "@/api/fetchApi";
 
 import { IconArrowLeft, IconFilter, IconPlus } from "@tabler/icons-vue";
 
@@ -129,6 +174,10 @@ export default {
     const tasksChart = ref([]);
     const projectMembers = ref([]);
     const memberSelected = ref('All Members');
+
+    const projectId = ref(null)
+
+    const groupsProject = ref([])
 
     const selectedStartDate = ref("");
     const selectedEndDate = ref("");
@@ -165,6 +214,11 @@ export default {
           case "PROJECT_DETAILS":
             const data = await getProjectTask(ev);
             const pj = await getMembersOfProject(ev);
+            const groups = await GetGroupsOfProject({projectId: ev})
+            groupsProject.value = groups.groups
+            console.log(groups)
+
+            projectId.value = ev
 
             console.log(pj);
 
@@ -188,8 +242,13 @@ export default {
             const dataReload = await getProjectTask(ev);
             tasks.value = dataReload.tasks;
             tasksChart.value = dataReload.tasks;
+
             renderChart();
             break;
+          case "RELOAD_GROUPS":
+            const groupsReload = await GetGroupsOfProject({projectId: projectId.value})
+            groupsProject.value = groupsReload.groups
+            break
         }
       });
     };
@@ -328,6 +387,15 @@ export default {
       emitter.emit("CLOSE_PROJECT_DETAILS");
     };
 
+    const showCreateGroupModal = () => {
+      emitter.emit("OPEN_CREATE_GROUP", projectId.value);
+    }
+
+    const showAddMembersToGroupModal = (groupId) => {
+      console.log(":::::OPEN ADD MEMBERS",groupId)
+      emitter.emit("OPEN_ADD_MEMBERS_TO_GROUP", {groupId: groupId, members: projectMembers.value})
+    }
+
     return {
       getStatusCount,
       projectMembers,
@@ -339,7 +407,10 @@ export default {
       filterTasksByDate,
       selectedStartDate,
       selectedEndDate,
-      closeTask
+      closeTask,
+      showCreateGroupModal,
+      groupsProject,
+      showAddMembersToGroupModal
     };
   },
 };
