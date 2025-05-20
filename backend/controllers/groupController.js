@@ -236,7 +236,9 @@ exports.deleteGroup = async (req, res) => {
 
 exports.selectGroupLeader = async (req, res) => {
   try {
-    const { groupId, userId } = req.params;
+    const { groupId } = req.params;
+
+    const { userId } = req.body;
 
     const group = await GroupModel.findById(groupId);
 
@@ -244,6 +246,21 @@ exports.selectGroupLeader = async (req, res) => {
       return res.json({
         status: "failed",
         error: "Group not found",
+      });
+    }
+    if(group.lead){
+      return res.json({
+        status: "failed",
+        error: "Group already have a leader",
+      });
+    }
+
+    console.log("GROUP LEADER", group, userId)
+
+    if(!group.members.includes(userId)){
+      return res.json({
+        status: "failed",
+        error: "User not in group",
       });
     }
 
@@ -279,6 +296,35 @@ exports.getGroupsOfProject = async (req, res) => {
     return res.json({
       status: "failed",
       error: "Get groups of project failed",
+    });
+  }
+};
+
+exports.deleteLeader = async (req, res) => {
+  try {
+    const { groupId } = req.params;
+
+    const group = await GroupModel.findById(groupId);
+
+    if (!group) {
+      return res.json({
+        status: "failed",
+        error: "Group not found",
+      });
+    }
+
+    group.lead = null
+
+    await group.save();
+
+    return res.json({
+      status: "success",
+      message: "Delete leader success",
+    });
+  } catch (error) {
+    return res.json({
+      status: "failed",
+      error: "Delete leader failed",
     });
   }
 };

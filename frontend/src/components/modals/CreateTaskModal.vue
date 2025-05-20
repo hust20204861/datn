@@ -38,6 +38,22 @@
               {{ user.name }}
             </option>
           </select>
+
+          <label for="parentTask" class="block mb-2">Parent Task</label>
+          <select
+            v-model="parentTask"
+            id="parentTask"
+            class="w-full p-3 mb-6 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option
+              v-for="task in tasks"
+              :key="task._id"
+              :value="task"
+              class="max-h-h[200px] bg-white hover:bg-gray-300 overflow-hidden overflow-y-auto"
+            >
+              {{ task.name }}
+            </option>
+          </select>
           <button
             type="submit"
             class="w-full p-3 bg-green-600 text-white rounded-md hover:bg-green-700"
@@ -76,6 +92,9 @@ import emitter from "@/emitter";
       const users = ref([]);
       const projectId = computed(() => props.projectId)
       const onTaskModal = ref(false)
+      const parentTask = ref(null)
+
+      const tasks = ref([])
 
       onMounted(async() => {
           init()
@@ -86,6 +105,8 @@ import emitter from "@/emitter";
               switch (type) {
                   case 'OPEN_TASK_MODAL':
                     membersProject()
+
+                    tasks.value = ev.tasks
 
                     onTaskModal.value = true
                       break
@@ -100,7 +121,7 @@ import emitter from "@/emitter";
         const endAt = new Date(startAt);
         endAt.setDate(startAt.getDate() + 2);  
 
-        console.log(assignedTo.value)
+        console.log(parentTask.value)
 
         const data = await createTask({
           projectId: projectId.value,
@@ -113,6 +134,7 @@ import emitter from "@/emitter";
           startAt: startAt,
           endAt: endAt,
           dependencies: [],
+          parentTask: parentTask.value?._id || null,
         });
 
         emitter.emit('NOTIFICATION', data)
@@ -150,6 +172,8 @@ import emitter from "@/emitter";
         closeModal,
         users,
         onTaskModal,
+        tasks,
+        parentTask
       };
     },
   };

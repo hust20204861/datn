@@ -15,7 +15,29 @@ exports.createTask = async (req, res) => {
       startAt,
       endAt,
       dependencies,
+      parentTask
     } = req.body;
+
+    let actualStartAt = startAt;
+    let actualEndAt = endAt;
+
+    console.log("PARENT TASK: ",parentTask)
+
+
+    if(parentTask){
+      const parent = await TaskModel.findById(parentTask);
+
+      console.log("PARENT TASK: ",parent)
+
+      if(!parent){
+        return res.json({
+          status: "failed",
+          error: "Parent task not found"
+        })
+      }
+      actualStartAt = new Date(parent.startAt);
+      actualEndAt = new Date(parent.endAt);
+    }
 
     const newTask = new TaskModel({
       projectId,
@@ -25,9 +47,10 @@ exports.createTask = async (req, res) => {
       status,
       dueDate,
       priority,
-      startAt,
-      endAt,
+      startAt: actualStartAt,
+      endAt: actualEndAt,
       dependencies,
+      parentTask
     });
 
     await newTask.save();
@@ -77,35 +100,100 @@ exports.getUserTasks = async (req, res) => {
   }
 };
 
+// exports.getProjectTasks = async (req, res) => {
+//   try {
+//     //id project được truyền vào
+//     const { projectId } = req.params;
+//     console.log("PROJECT ID:", projectId);
+//     const tasks = await TaskModel.find({ projectId: projectId }).populate(
+//       "assignedTo",
+//       "-password"
+//     );
+//     // if(!tasks){
+//     //     return;
+//     // }
+
+//     const formattedTasks = tasks.map((task) => {
+//       return {
+//         ...task.toObject(),
+//         startAt: task.startAt ? task.startAt.toISOString().slice(0, 16) : null, // Định dạng startAt
+//         endAt: task.endAt ? task.endAt.toISOString().slice(0, 16) : null, // Định dạng endAt
+//       };
+//     });
+
+//     return res.json({
+//       status: "success",
+//       tasks: formattedTasks,
+//     });
+//   } catch (error) {
+//     return res.json({
+//       status: "failed",
+//       error,
+//     });
+//   }
+// };
+
 exports.getProjectTasks = async (req, res) => {
   try {
-    //id project được truyền vào
     const { projectId } = req.params;
-    console.log("PROJECT ID:", projectId);
-    const tasks = await TaskModel.find({ projectId: projectId }).populate(
-      "assignedTo",
-      "-password"
-    );
-    // if(!tasks){
-    //     return;
-    // }
 
-    const formattedTasks = tasks.map((task) => {
-      return {
-        ...task.toObject(),
-        startAt: task.startAt ? task.startAt.toISOString().slice(0, 16) : null, // Định dạng startAt
-        endAt: task.endAt ? task.endAt.toISOString().slice(0, 16) : null, // Định dạng endAt
-      };
+    // Lấy toàn bộ task của project, populate assignedTo (ẩn password)
+    const tasks = await TaskModel.find({ projectId })
+      .populate("assignedTo", "-password")
+      .lean(); // chuyển sang object JS thường
+
+    // Tạo map để dễ xử lý
+    const tasksById = {};
+    const childMap = {};
+
+    tasks.forEach((task) => {
+      // Format thời gian
+      task.startAt = task.startAt ? new Date(task.startAt).toISOString().slice(0, 16) : null;
+      task.endAt = task.endAt ? new Date(task.endAt).toISOString().slice(0, 16) : null;
+
+      const id = task._id.toString();
+      const parentId = task.parentTask ? task.parentTask.toString() : null;
+
+      tasksById[id] = task;
+
+      if (parentId) {
+        if (!childMap[parentId]) childMap[parentId] = [];
+        childMap[parentId].push(id);
+      }
     });
+
+    // Đệ quy để sắp xếp cha → con
+    const buildSortedTasks = (taskId, list) => {
+      const task = tasksById[taskId];
+      if (!task) return;
+
+      list.push(task);
+
+      if (childMap[taskId]) {
+        for (const childId of childMap[taskId]) {
+          buildSortedTasks(childId, list);
+        }
+      }
+    };
+
+    // Tìm tất cả task cha (parentTask == null)
+    const sortedTasks = [];
+    for (const id in tasksById) {
+      const task = tasksById[id];
+      if (!task.parentTask) {
+        buildSortedTasks(id, sortedTasks);
+      }
+    }
 
     return res.json({
       status: "success",
-      tasks: formattedTasks,
+      tasks: sortedTasks,
     });
+
   } catch (error) {
-    return res.json({
+    return res.status(500).json({
       status: "failed",
-      error,
+      error: error.message,
     });
   }
 };
@@ -154,6 +242,9 @@ exports.updateTask = async (req, res) => {
     } = req.body;
 
     const task = await TaskModel.findById(taskId);
+
+    console.log(":::::", task)
+    const parent = await TaskModel.findById(task.parentTask);
     if (!task) {
       return res.json({
         status: "failed",
@@ -186,6 +277,20 @@ exports.updateTask = async (req, res) => {
           status: "failed",
           error: `Task cannot be updated to ${status} because dependent task (${depTask.name}) is not done.`,
         });
+      }
+    }
+
+
+    if(parent){
+      if(status === "DONE"){
+        const childTasks = await TaskModel.find({ parentTask: task.parentTask });
+
+        const allDone = childTasks.every(childTask => childTask.status === "DONE");
+
+        if (allDone) {
+          parent.status = "DONE";
+          await parent.save();
+        }
       }
     }
 
@@ -382,6 +487,17 @@ exports.updateTaskStartDate = async (req, res) => {
     const { startAt } = req.body;
     const task = await TaskModel.findByIdAndUpdate(taskId);
 
+    const parent = await TaskModel.findById(task.parentTask);
+
+    if(parent){
+      if(new Date(startAt) < new Date(parent.startAt)){
+        return res.json({
+          status: "failed",
+          error: `Task StartDate must be greater than Parent Task StartDate`,
+        });
+      }
+    }
+
     if(new Date(startAt) >= new Date(task.endAt)){
       return res.json({
         status: "failed",
@@ -436,9 +552,20 @@ exports.updateTaskEndDate = async (req, res) => {
       });
     }
 
+    const parent = await TaskModel.findById(task.parentTask);
+
     const today = new Date(); 
     today.setHours(0, 0, 0, 0); 
     const endAtDate = new Date(endAt); 
+
+    if(parent){
+      if(endAtDate > new Date(parent.endAt)){
+        return res.json({
+          status: "failed",
+          error: `Task EndDate must be greater than Parent Task EndDate`,
+        });
+      }
+    }
 
     if (endAtDate > today) {
       task.isOverdue = false;

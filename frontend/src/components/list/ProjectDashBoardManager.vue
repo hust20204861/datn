@@ -11,7 +11,11 @@
     </div>
 
     <div class="flex items-center justify-between">
-      <div></div>
+      <div>
+        <button @click="exportChartToPDF" class="btn-export-pdf">
+            Export PDF
+          </button>
+      </div>
       <button  class="p-3 relative">
         <div class="flex justify-center items-center">
           <input
@@ -29,6 +33,7 @@
 
           <p class="text-center mr-3">{{memberSelected}}</p>
           <IconFilter @click.prevent="onShowFilter" size="30" class="text-neutral-950" />
+
         </div>
         <template v-if="onShow">
           <div class="w-[200px] max-h-[200px] overflow-y-auto rounded-xl border bg-white absolute top-10 right-0 z-[50] transition-all duration-300">
@@ -62,10 +67,15 @@
       height="400"
     ></canvas>
 
-    <h2 class="text-xl font-semibold text-center mt-10">Project Members</h2>
-    <button @click.prevent="showCreateGroupModal">
-      create group
-    </button>
+    <div class="flex items-center justify-between">
+      <div></div>
+      <h2 class="text-xl font-semibold text-center mt-10">Project Members</h2>
+      <button class="flex items-center justify-center" @click.prevent="showCreateGroupModal">
+        <IconPlus size="20" class="mr-2" />
+        Create group
+      </button>
+    </div>
+    
 
     <div v-for="(group, index) in groupsProject" :key="index">
       <table
@@ -77,6 +87,7 @@
           <th class="px-4 py-2 border-b text-left">Name</th>
           <th class="px-4 py-2 border-b text-left">Username</th>
           <th class="px-4 py-2 border-b text-left">Position</th>
+          <th class="px-4 py-2 border-b text-left"></th>
         </tr>
       </thead>
       <tbody>
@@ -88,7 +99,19 @@
           <td class="px-4 py-2 border-b">{{ index+1 }}</td>
           <td class="px-4 py-2 border-b">{{ member.name }}</td>
           <td class="px-4 py-2 border-b">{{ member.username }}</td>
-          <td class="px-4 py-2 border-b">{{ member.role || "Thành viên" }}</td>
+          <td class="px-4 py-2 border-b">{{ group.lead && group.lead._id == member._id ? "Leader" : "Member" }}</td>
+          <td class="px-4 py-2 border-b">
+            <button 
+              v-if="!group.lead || group.lead._id != member._id" 
+              @click.prevent="selectGroupLeader({groupId: group._id, userId:member._id})">
+              Select to Leader
+            </button>
+            <button 
+              v-else
+              @click.prevent="deleteLeader(group._id)">
+              Delete Leader
+            </button>
+            </td>
         </tr>
         <tr class="odd:bg-white even:bg-gray-50">
           <td class="px-4 py-2 border-b">
@@ -97,6 +120,7 @@
               <p>Add Member</p>
             </button>
           </td>
+          <td class="px-4 py-2 border-b">None</td>
           <td class="px-4 py-2 border-b">None</td>
           <td class="px-4 py-2 border-b">None</td>
           <td class="px-4 py-2 border-b">None</td>
@@ -158,10 +182,14 @@ import emitter from "@/emitter";
 import { 
   getProjectTask, 
   getMembersOfProject,
-  GetGroupsOfProject
+  GetGroupsOfProject,
+  SelectGroupLeader,
+  DeleteLeader
 } from "@/api/fetchApi";
 
 import { IconArrowLeft, IconFilter, IconPlus } from "@tabler/icons-vue";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 export default {
   components: {
@@ -396,6 +424,43 @@ export default {
       emitter.emit("OPEN_ADD_MEMBERS_TO_GROUP", {groupId: groupId, members: projectMembers.value})
     }
 
+    const selectGroupLeader = async({groupId, userId}) => {
+      const response = await SelectGroupLeader({groupId, userId})
+      emitter.emit('NOTIFICATION', response)
+      if(response.status == 'success'){
+        emitter.emit("RELOAD_GROUPS")
+      }
+    }
+
+    const deleteLeader = async(groupId) => {
+      const response = await DeleteLeader({groupId})
+      emitter.emit('NOTIFICATION', response)
+      if(response.status == 'success'){
+        emitter.emit("RELOAD_GROUPS")
+      }
+    }
+
+    const exportChartToPDF = async () => {
+      const canvas = document.getElementById("taskStatusChart");
+      
+      // Dùng html2canvas convert canvas thành ảnh (nếu bạn chỉ lấy canvas thì có thể dùng canvas.toDataURL() cũng được)
+      const canvasImage = canvas.toDataURL("image/png", 1.0);
+      console.log(canvasImage);
+
+      // Tạo file pdf
+      const pdf = new jsPDF({
+        orientation: "landscape",
+        unit: "px",
+        format: [canvas.width, canvas.height], // Kích thước bằng canvas
+      });
+
+      // Thêm ảnh vào pdf, tọa độ (0,0), rộng và cao bằng canvas
+      pdf.addImage(canvasImage, "PNG", 0, 0, canvas.width, canvas.height);
+
+      // Tải file pdf
+      pdf.save("task-status-chart.pdf");
+    };
+
     return {
       getStatusCount,
       projectMembers,
@@ -410,7 +475,10 @@ export default {
       closeTask,
       showCreateGroupModal,
       groupsProject,
-      showAddMembersToGroupModal
+      showAddMembersToGroupModal,
+      selectGroupLeader,
+      deleteLeader,
+      exportChartToPDF
     };
   },
 };

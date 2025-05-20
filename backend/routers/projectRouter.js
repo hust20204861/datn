@@ -20,7 +20,8 @@ const {
     updateGroup,
     deleteGroup,
     selectGroupLeader,
-    getGroupsOfProject
+    getGroupsOfProject,
+    deleteLeader
 } = require('../controllers/groupController')
 const isLogin = require('../middlewares/isLogin')
 const projectRouter = express.Router();
@@ -43,5 +44,6 @@ projectRouter.post('/group/:groupId/selectLeader', isLogin, selectGroupLeader)
 projectRouter.post('/group/:groupId/addMember', isLogin, addMemberToGroup)  
 projectRouter.post('/group/:groupId/removeMember', isLogin, removeMemberFromGroup)
 projectRouter.get('/:projectId/groups', isLogin, getGroupsOfProject)
+projectRouter.post('/group/:groupId/deleteLeader', isLogin, deleteLeader)
 
 module.exports = projectRouter;

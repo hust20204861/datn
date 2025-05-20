@@ -52,6 +52,7 @@ const taskSchema = new mongoose.Schema(
     parentTask: {   
       type: mongoose.Schema.Types.ObjectId,
       ref: "Task",
+      default: null,
     },
   },
   {

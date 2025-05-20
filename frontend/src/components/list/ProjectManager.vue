@@ -409,7 +409,7 @@
           :style="getTimelineStyle(task)"
         >
         <div class="w-full h-full relative group" @click.prevent="taskDetails(task)">
-          <div class="px-2 font-bold group-hover:text-neutral-600">{{ task.name }}</div>
+          <div class="px-2 font-bold group-hover:text-neutral-600 line-clamp-1">{{ task.name }}</div>
             <div 
               class="absolute top-8 right-0 translate-x-1/2 rounded-lg border border-neutral-500 p-5 shadow-lg transform z-[1000] transition-opacity duration-300 opacity-0 group-hover:opacity-100"
               :class="{
@@ -920,7 +920,7 @@ export default {
     };
 
     const openTaskModal = () => {
-      emitter.emit("OPEN_TASK_MODAL");
+      emitter.emit("OPEN_TASK_MODAL", { tasks: tasks.value });
     };
 
     const formatDate = (date) => {

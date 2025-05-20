@@ -253,7 +253,8 @@ export const Signup = async ({name, username, password}) => {
                                   priority,
                                   startAt,
                                   endAt,
-                                  dependencies,}) => {
+                                  dependencies,
+                                  parentTask}) => {
     try{
       const data = await fetchApi(`/api/v1/task/`, 'POST', 
       { projectId,
@@ -266,6 +267,7 @@ export const Signup = async ({name, username, password}) => {
         startAt,
         endAt,
         dependencies,
+        parentTask
       })
       return data;
     }catch(error){
@@ -357,6 +359,16 @@ export const DeleteGroup = async({groupId}) => {
 export const GetGroupsOfProject = async({projectId}) => {
   try{
     const data = await fetchApi(`/api/v1/project/${projectId}/groups`)
+    return data;
+  }catch(error){
+      console.error('group error:', error.message);
+      throw error;
+  }
+}
+
+export const DeleteLeader = async({groupId}) => {
+  try{
+    const data = await fetchApi(`/api/v1/project/group/${groupId}/deleteLeader`, 'POST')
     return data;
   }catch(error){
       console.error('group error:', error.message);
