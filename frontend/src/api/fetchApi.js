@@ -375,3 +375,13 @@ export const DeleteLeader = async({groupId}) => {
       throw error;
   }
 }
+export const AddMemberToProject = async({projectId, username}) => {
+  try{
+    const data = await fetchApi(`/api/v1/project/addmember`, 'POST', { projectId, username })
+    console.log(data)
+    return data;
+  }catch(error){
+      console.error('group error:', error.message);
+      throw error;
+  }
+}

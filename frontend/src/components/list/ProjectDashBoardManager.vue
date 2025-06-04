@@ -150,7 +150,7 @@
         </tr>
         <tr class="odd:bg-white even:bg-gray-50">
           <td class="px-4 py-2 border-b">
-            <button class="w-full h-full flex justify-start item-center">
+            <button class="w-full h-full flex justify-start item-center" @click.prevent="showAddMembersToProjectModal">
               <IconPlus size="20" class="mr-2" />
               <p>Add Member</p>
             </button>
@@ -443,23 +443,23 @@ export default {
     const exportChartToPDF = async () => {
       const canvas = document.getElementById("taskStatusChart");
       
-      // Dùng html2canvas convert canvas thành ảnh (nếu bạn chỉ lấy canvas thì có thể dùng canvas.toDataURL() cũng được)
       const canvasImage = canvas.toDataURL("image/png", 1.0);
       console.log(canvasImage);
 
-      // Tạo file pdf
       const pdf = new jsPDF({
         orientation: "landscape",
         unit: "px",
-        format: [canvas.width, canvas.height], // Kích thước bằng canvas
+        format: [canvas.width, canvas.height], 
       });
 
-      // Thêm ảnh vào pdf, tọa độ (0,0), rộng và cao bằng canvas
       pdf.addImage(canvasImage, "PNG", 0, 0, canvas.width, canvas.height);
 
-      // Tải file pdf
       pdf.save("task-status-chart.pdf");
     };
+
+    const showAddMembersToProjectModal = () => {
+      emitter.emit("OPEN_ADD_MEMBERS_TO_PROJECT", {projectId: projectId.value})
+    }
 
     return {
       getStatusCount,
@@ -478,7 +478,8 @@ export default {
       showAddMembersToGroupModal,
       selectGroupLeader,
       deleteLeader,
-      exportChartToPDF
+      exportChartToPDF,
+      showAddMembersToProjectModal
     };
   },
 };

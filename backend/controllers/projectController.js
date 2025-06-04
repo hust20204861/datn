@@ -1,4 +1,5 @@
 const ProjectModel = require("../models/projectModel");
+const UserModel = require("../models/userModel");
 const HistoryModel = require("../models/historyModel");
 
 const mongoose = require('mongoose');
@@ -279,6 +280,59 @@ exports.getProjectHistory = async (req, res) => {
     return res.json({
       status: "failed",
       error: "Error retrieving project history",
+    });
+  }
+};
+
+exports.addMemberToProject = async (req, res) => {
+  try {
+    const { projectId, username } = req.body;
+
+    console.log("PROJECT ID", projectId)
+
+    if (!projectId || !username) {
+      return res.status(400).json({
+        status: "Add member failed",
+        error: "Missing projectId or username"
+      });
+    }
+
+    const user = await UserModel.findOne({ username });
+    if (!user) {
+      return res.status(404).json({
+        status: "Add member failed",
+        error: "User not found"
+      });
+    }
+
+    const project = await ProjectModel.findById(projectId);
+    if (!project) {
+      return res.status(404).json({
+        status: "Add member failed",
+        error: "Project not found"
+      });
+    }
+
+    if (project.members.includes(user._id)) {
+      return res.status(400).json({
+        status: "Add member failed",
+        error: "User already in project"
+      });
+    }
+
+    project.members.push(user._id);
+    await project.save();
+
+    return res.status(200).json({
+      status: "Add member success",
+      message: `User ${username} added to project successfully`,
+      updatedProject: project
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      status: "Add member failed",
+      error: "Server error"
     });
   }
 };
