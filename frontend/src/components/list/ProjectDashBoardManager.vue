@@ -160,6 +160,9 @@
         </tr>
       </tbody>
     </table>
+
+  <Notification/>
+
   </div>
 </template>
 
@@ -191,11 +194,14 @@ import { IconArrowLeft, IconFilter, IconPlus } from "@tabler/icons-vue";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 
+import Notification from '../modals/Notification.vue';
+
 export default {
   components: {
     IconArrowLeft, 
     IconFilter, 
-    IconPlus
+    IconPlus,
+    Notification
   },
   setup() {
     const tasks = ref([]);
@@ -454,7 +460,7 @@ export default {
 
       pdf.addImage(canvasImage, "PNG", 0, 0, canvas.width, canvas.height);
 
-      pdf.save("task-status-chart.pdf");
+      pdf.save(`${memberSelected.value}_${selectedStartDate.value}-${selectedEndDate.value}.pdf`);
     };
 
     const showAddMembersToProjectModal = () => {

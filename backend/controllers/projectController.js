@@ -288,7 +288,7 @@ exports.addMemberToProject = async (req, res) => {
   try {
     const { projectId, username } = req.body;
 
-    console.log("PROJECT ID", projectId)
+    console.log("PROJECT ID", projectId, username)
 
     if (!projectId || !username) {
       return res.status(400).json({

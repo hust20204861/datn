@@ -35,7 +35,7 @@ projectRouter.put('/:projectId', isLogin, updateProject)
 projectRouter.delete('/:projectId', isLogin, deleteProject)
 projectRouter.get('/:projectId/members', isLogin, getMembersOfProject)
 projectRouter.get('/:projectId/histories', isLogin, getProjectHistory)
-projectRouter.get('/project/addmember', isLogin, addMemberToProject)
+projectRouter.post('/addmember', isLogin, addMemberToProject)
 
 
 projectRouter.post('/group/create', isLogin, createGroup)

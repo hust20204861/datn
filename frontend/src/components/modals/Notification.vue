@@ -13,21 +13,32 @@ import { computed, onMounted, onUnmounted, ref } from 'vue';
         setup(props) {
             const data = ref(null)
             onMounted(() => {
-                data.value =  props.data
-                emitter.on('NOTIFICATION', showModal)
-
+                // data.value =  props.data
+                // emitter.on('NOTIFICATION', showModal)
+                init()
             })
 
-            onUnmounted(() => {
-                emitter.off('NOTIFICATION', showModal)
-            })
+            const init = () => {
+                emitter.on('*', async(type, ev) => {
+                    switch (type) {
+                        case 'NOTIFICATION':
+                            data.value = ev
+                            console.log(ev)
+                            showModal()
+                            break
+                    }
+                })
+            }
+
+            // onUnmounted(() => {
+            //     emitter.off('NOTIFICATION', showModal)
+            // })
             const modalShow = ref(false)
             const showModal = (payload) => {
-                if(payload){
-                    data.value = payload;
-                }
+                // if(payload){
+                //     data.value = payload;
+                // }
                 modalShow.value = true
-                console.log(data.value)
 
                 setTimeout(() => {
                     modalShow.value = false

@@ -78,10 +78,11 @@ export default {
         username: username.value,
         projectId: projectId.value
       });
-      emitter.emit('NOTIFICATION', data)
+      
       console.log(data)
-      if (data.status === "success") {
+      if (data.status === "Add member success") {
         hide()
+        emitter.emit('NOTIFICATION', data)
         emitter.emit('RELOAD_PROJECT')
         emitter.emit('RELOAD_GROUPS')
       }
