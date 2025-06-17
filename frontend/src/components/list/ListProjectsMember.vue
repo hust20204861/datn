@@ -88,6 +88,7 @@ export default {
         };
 
         const projectTasks = async(projectId) => {
+            console.log(":::::GET LIST LEADER OF GROUP")
             pjId.value = projectId
 
             onTask.value = true

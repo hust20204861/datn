@@ -121,6 +121,8 @@ import emitter from "@/emitter";
         const endAt = new Date(startAt);
         endAt.setDate(startAt.getDate() + 2);  
 
+        const userId = localStorage.getItem('userID')
+
         console.log(parentTask.value)
 
         const data = await createTask({
@@ -135,6 +137,7 @@ import emitter from "@/emitter";
           endAt: endAt,
           dependencies: [],
           parentTask: parentTask.value?._id || null,
+          userId: userId
         });
 
         emitter.emit('NOTIFICATION', data)

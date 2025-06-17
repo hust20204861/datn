@@ -88,7 +88,7 @@
             </td>
             <td class="px-4 py-2 border-b border-r">
               <select 
-                v-if="isManager || task.assignedTo.some(user => user._id === userId)"
+                v-if="isManager || task.assignedTo.some(user => user._id === userId) || task.createBy == userId"
                 v-model="task.status"
                 class="bg-inherit focus:outline-none"
                 :class="{
@@ -134,7 +134,7 @@
                 </div>
 
                 <button
-                  v-if="isManager"
+                  v-if="isManager || task.createBy == userId"
                   @click="onDropdownSelectUser(task)"
                   class="ml-2 relative"
                 >
@@ -162,7 +162,7 @@
             <!-- <td class="px-4 py-2 border-b border-r">{{ formatDate(task.startAt) }}</td> -->
             <td class="px-4 py-2 border-b border-r">
               <input
-                v-if="isManager"
+                v-if="isManager || task.createBy == userId"
                 type="datetime-local"
                 v-model="task.startAt"
                 @change="UpdateTaskStartDate(task._id, task.startAt)"
@@ -173,7 +173,7 @@
             <!-- <td class="px-4 py-2 border-b border-r">{{ formatDate(task.endAt) }}</td> -->
             <td class="px-4 py-2 border-b border-r">
               <input
-                v-if="isManager"
+                v-if="isManager || task.createBy == userId"
                 type="datetime-local"
                 v-model="task.endAt"
                 @change="UpdateTaskEndDate(task._id, task.endAt)"
@@ -203,7 +203,7 @@
                 </div>
 
                 <button
-                  v-if="isManager"
+                  v-if="isManager || task.createBy == userId"
                   @click="onDropdownSelect(task)"
                   class="ml-2 relative"
                 >
@@ -233,7 +233,7 @@
 
             <td class="px-4 py-2 border-b border-r">
               <select
-                v-if="isManager"
+                v-if="isManager || task.createBy == userId"
                 v-model="task.priority"
                 class="bg-inherit focus:outline-none"
                 :class="{
@@ -560,6 +560,7 @@ export default {
             isManager.value = ev.isManager;
 
             projectDetails.value = pj;
+
             tasks.value = data.tasks;
 
             console.log(tasks.value);

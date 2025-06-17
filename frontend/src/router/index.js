@@ -31,7 +31,6 @@ const routes = [
     name: 'dashboard',
     component: DashBoard
   },
-
 ]
 
 const router = createRouter({

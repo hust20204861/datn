@@ -19,4 +19,7 @@ export default {
     18: 'Add new task',
     19: 'Back to Sign in',
     20: `Don't you have an account?`,
+    21: 'Update',
+    22: 'Change Password',
+    23: 'Profile',
 }

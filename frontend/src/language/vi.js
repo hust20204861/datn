@@ -18,5 +18,8 @@ export default {
     17: 'Danh sách công việc của bạn',
     18: 'Tạo công việc mới',
     19: 'Trở về trang đăng nhập',
-    20: 'Bạn chưa có tài khoản?'
+    20: 'Bạn chưa có tài khoản?',
+    21: 'Cập nhật',
+    22: 'Thay đổi mật khẩu',
+    23: 'Cá nhân',
 }

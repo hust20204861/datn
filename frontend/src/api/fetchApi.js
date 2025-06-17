@@ -50,6 +50,16 @@ export const Signup = async ({name, username, password}) => {
   }
 };
 
+export const getUser = async() => {
+  try{
+      const data = await fetchApi('/api/v1/user/profile');
+      // console.log("USERS:", data)
+      return data;
+  }catch(error){
+      console.error("GET USERS ERROR:", error)
+  }
+}
+
   export const getUsers = async() => {
     try{
         const data = await fetchApi('/api/v1/user');
@@ -153,6 +163,7 @@ export const Signup = async ({name, username, password}) => {
   }
 
   export const createComment = async({content,taskId}) => {
+    console.log("CONTENT", content)
     try{
       const data = await fetchApi(`/api/v1/task/comment/${taskId}`, 'POST', {content})
       return data;
@@ -170,7 +181,17 @@ export const Signup = async ({name, username, password}) => {
         throw error;
     }
   }
-
+  export const updateUser = async(postData) => {
+    try{
+      const name = JSON.parse(postData).name
+      const avatar_url = JSON.parse(postData).avatar_url
+      const data = await fetchApi(`/api/v1/user/update`, 'PUT', {name, avatar_url})
+      return data;
+    }catch(error){
+        console.error('comment error:', error.message);
+        throw error;
+    }
+  }
   export const updateTask = async({taskId, status}) => {
     try{
       const data = await fetchApi(`/api/v1/task/${taskId}`, 'PUT', {status})
@@ -254,7 +275,8 @@ export const Signup = async ({name, username, password}) => {
                                   startAt,
                                   endAt,
                                   dependencies,
-                                  parentTask}) => {
+                                  parentTask,
+                                  userId}) => {
     try{
       const data = await fetchApi(`/api/v1/task/`, 'POST', 
       { projectId,
@@ -267,7 +289,8 @@ export const Signup = async ({name, username, password}) => {
         startAt,
         endAt,
         dependencies,
-        parentTask
+        parentTask,
+        userId
       })
       return data;
     }catch(error){

@@ -15,7 +15,8 @@ exports.createTask = async (req, res) => {
       startAt,
       endAt,
       dependencies,
-      parentTask
+      parentTask,
+      userId
     } = req.body;
 
     let actualStartAt = startAt;
@@ -50,7 +51,8 @@ exports.createTask = async (req, res) => {
       startAt: actualStartAt,
       endAt: actualEndAt,
       dependencies,
-      parentTask
+      parentTask,
+      createBy: userId
     });
 
     await newTask.save();
@@ -86,7 +88,11 @@ exports.createTask = async (req, res) => {
 //hàm lấy các task của 1 project
 exports.getUserTasks = async (req, res) => {
   try {
-    const tasks = await TaskModel.find({ assignedTo: req.userAuth._id });
+    const tasks = await TaskModel.find({ assignedTo: req.userAuth._id })
+    .populate({
+      path: "projectId",
+      select: "manager",
+    });
     return res.json({
       status: "success",
       tasks,
@@ -243,7 +249,6 @@ exports.updateTask = async (req, res) => {
 
     const task = await TaskModel.findById(taskId);
 
-    console.log(":::::", task)
     const parent = await TaskModel.findById(task.parentTask);
     if (!task) {
       return res.json({
