@@ -260,7 +260,7 @@
               </div>
             </td>
           </tr>
-          <tr v-if="isManager" class="odd:bg-white even:bg-gray-50">
+          <tr v-if="isManager || isLeader" class="odd:bg-white even:bg-gray-50">
             <td class="px-4 py-2 border-b border-r">
               <button
                 class="w-full h-full flex justify-start items-center"
@@ -471,6 +471,7 @@ export default {
     const dependencies = ref([]);
 
     const isManager = ref(false);
+    const isLeader = ref(false)
 
     const widthSVG = ref(500);
     const heightSVG = ref(800);
@@ -484,6 +485,7 @@ export default {
     const projectHistories = ref([]);
 
     const users = ref([]);
+    const membersOfLeader = ref([])
 
     const onShow = ref(false);
     const onShowHistory = ref(false);
@@ -555,9 +557,16 @@ export default {
           case "PJ_DETAILS":
             console.log(ev);
             const data = await getProjectTask(ev.projectId);
+
             const pj = await getMembersOfProject(ev.projectId);
+
             projectId.value = ev.projectId;
             isManager.value = ev.isManager;
+            isLeader.value = ev.isLeader;
+
+            if(ev.membersOfLeader){
+              membersOfLeader.value = ev.membersOfLeader
+            }
 
             projectDetails.value = pj;
 
@@ -914,8 +923,16 @@ export default {
 
     const onDropdownSelectUser = async (task) => {
       if (!dropdownOpenUser.value[task._id]) {
-        const data = await getMembersOfProject(projectId.value);
-        users.value = data.data.members;
+        console.log(membersOfLeader.value, Object.keys(membersOfLeader.value).length)
+
+        if(Object.keys(membersOfLeader.value).length !== 0){
+          console.log(membersOfLeader.value)
+          users.value = membersOfLeader.value
+        }else{
+          const data = await getMembersOfProject(projectId.value);
+          users.value = data.data.members;
+        }
+        console.log(users.value)
       }
       dropdownOpenUser.value[task._id] = !dropdownOpenUser.value[task._id];
     };
@@ -936,7 +953,7 @@ export default {
     };
 
     const taskDetails = (task) => {
-      if(isManager.value || task.assignedTo.some(user => user._id === userId)){
+      if(isManager.value || task.assignedTo.some(user => user._id === userId || task.createBy == userId)){
         emitter.emit("TASK_DETAILS", {taskId: task._id});
       }
     };
@@ -985,6 +1002,7 @@ export default {
       dropdownOpen,
       dropdownOpenUser,
       isManager,
+      isLeader,
       tasks,
       users,
       userId,

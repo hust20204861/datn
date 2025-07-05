@@ -26,7 +26,7 @@ import emitter from '@/emitter';
 
 import { getProjectsManager, getProjectsMember } from '@/api/fetchApi';
 
-import { getProjectTask, deleteProject } from '@/api/fetchApi';
+import { getProjectTask, deleteProject, GetGroupsOfProject } from '@/api/fetchApi';
 import Notification from '../modals/Notification.vue';
 import ProjectManager from './ProjectManager.vue';
 import CreateTaskModal from '../modals/CreateTaskModal.vue';
@@ -49,7 +49,12 @@ export default {
         const pjId = ref('')
         const projects = ref([])
 
+        const userId = localStorage.getItem('userID')
+
         const activeTab = ref(1)
+
+        const isLeader = ref(false)
+        const membersOfLeader = ref([])
 
         onMounted(() => {
             fetchProjectsMember()
@@ -88,12 +93,29 @@ export default {
         };
 
         const projectTasks = async(projectId) => {
-            console.log(":::::GET LIST LEADER OF GROUP")
+
+            const groups = await GetGroupsOfProject({projectId: projectId})
+
+            console.log(":::::GET LIST LEADER OF GROUP", groups)
+            if(groups && groups.groups.length > 0){
+                for(let group of groups.groups){
+                    if(group.lead && group.lead._id == userId){
+                        isLeader.value = true
+
+                        membersOfLeader.value = membersOfLeader.value.concat(group.members)
+                        break
+                    }
+                }
+            }
+
+            console.log(":::::IS LEADER", isLeader.value)
+
+
             pjId.value = projectId
 
             onTask.value = true
 
-            emitter.emit('PJ_DETAILS', {projectId, isManager: false})
+            emitter.emit('PJ_DETAILS', {projectId, isManager: false, isLeader: isLeader.value, membersOfLeader: membersOfLeader.value})
         }
 
         const closeTask = () => {

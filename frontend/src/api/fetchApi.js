@@ -408,3 +408,13 @@ export const AddMemberToProject = async({projectId, username}) => {
       throw error;
   }
 }
+
+export const changePasswordApi = async({currentPassword, newPassword, username}) => {
+  try{
+    const data = await fetchApi(`/api/v1/user/change-password`, 'POST', { currentPassword, newPassword, username })
+    return data;
+  }catch(error){
+      console.error('group error:', error.message);
+      throw error;
+  }
+}

@@ -93,7 +93,7 @@
 
       <button
         @click.prevent="DeleteTask(data.task._id)"
-        v-if="data.projectId.manager._id === userID"
+        v-if="data.projectId.manager._id === userID || data.createBy == userID"
         class="p-2 px-4 border-[1px] border-black absolute right-2 bottom-2 rounded-lg group hover:bg-red-500 hover:border-red-500"
       >
       <p class="font-semibold text-black group-hover:text-white">

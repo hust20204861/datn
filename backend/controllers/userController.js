@@ -143,3 +143,54 @@ exports.updateUser = async (req, res) => {
     updateUser, 
     });
 };
+exports.updatePassword = async (req, res) => {
+  try {
+    // Lấy thông tin từ body request
+    const { username, currentPassword, newPassword } = req.body;
+
+    // Kiểm tra nếu thiếu thông tin
+    if (!username || !currentPassword || !newPassword) {
+      return res.status(400).json({
+        status: "failed",
+        error: "Please provide all necessary information"
+      });
+    }
+
+    // Tìm người dùng theo username
+    const user = await UserModel.findOne({ username });
+    if (!user) {
+      return res.status(404).json({
+        status: "failed",
+        error: "User not found"
+      });
+    }
+
+    // Kiểm tra mật khẩu cũ có đúng không
+    const isOldPasswordValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isOldPasswordValid) {
+      return res.status(400).json({
+        status: "failed",
+        error: "Old password is incorrect"
+      });
+    }
+
+    // Băm mật khẩu mới
+    const salt = await bcrypt.genSalt(10);
+    const hashedNewPassword = await bcrypt.hash(newPassword, salt);
+
+    // Cập nhật mật khẩu mới vào cơ sở dữ liệu
+    user.password = hashedNewPassword;
+    await user.save();
+
+    return res.json({
+      status: "success",
+      message: "Password updated successfully"
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      status: "failed",
+      error: error.message
+    });
+  }
+};

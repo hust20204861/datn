@@ -97,7 +97,7 @@ export default {
 
             onTask.value = true
 
-            emitter.emit('PJ_DETAILS', {projectId, isManager: true})
+            emitter.emit('PJ_DETAILS', {projectId, isManager: true, isLeader: false, membersOfLeader: null})
         }
 
         const closeTask = () => {
