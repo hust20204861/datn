@@ -971,7 +971,8 @@ export default {
     };
 
     const rollBackHistory = async(history) => {
-      if(isManager.value || history.newState.assignedTo.some(id => id === userId)){
+      console.log(history)
+      if(isManager.value || history.changedBy._id == userId ){
         const type = history.changeType
         console.log(type)
         switch(type){

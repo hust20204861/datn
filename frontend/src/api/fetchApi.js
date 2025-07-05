@@ -172,6 +172,105 @@ export const getUser = async() => {
         throw error;
     }
   }
+
+  export const createCommentWithFiles = async({content, taskId, files}) => {
+    try{
+      const token = localStorage.getItem('accessToken');
+      
+      if (!token) {
+        throw new Error('No token found');
+      }
+
+      const formData = new FormData();
+      
+      // Thêm content vào FormData
+      if (content) {
+        formData.append('content', content);
+      }
+      
+      // Thêm files vào FormData
+      if (files && files.length > 0) {
+        for (let i = 0; i < files.length; i++) {
+          formData.append('files', files[i]);
+        }
+      }
+      
+      const response = await fetch(`http://localhost:2024/api/v1/task/comment/${taskId}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+          // Không set Content-Type với FormData, browser sẽ tự set với boundary
+        },
+        body: formData
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+      }
+      
+      const data = await response.json();
+      return data;
+    }catch(error){
+        console.error('comment with files error:', error.message);
+        throw error;
+    }
+  }
+
+  export const downloadFile = async(commentId, fileId) => {
+    try{
+      const token = localStorage.getItem('accessToken');
+      
+      if (!token) {
+        throw new Error('No token found');
+      }
+
+      const response = await fetch(`http://localhost:2024/api/v1/task/comment/${commentId}/file/${fileId}/download`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+      }
+      
+      // Lấy filename từ Content-Disposition header
+      const contentDisposition = response.headers.get('Content-Disposition');
+      let filename = 'download';
+      
+      if (contentDisposition) {
+        const matches = contentDisposition.match(/filename="(.+)"/);
+        if (matches && matches[1]) {
+          filename = matches[1];
+        }
+      }
+      
+      const blob = await response.blob();
+      
+      // Tạo URL tạm thời và trigger download
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      
+      return { success: true };
+    }catch(error){
+        console.error('download file error:', error.message);
+        throw error;
+    }
+  }
+
+  export const getFileUrl = (commentId, fileId) => {
+    return `http://localhost:2024/api/v1/task/comment/${commentId}/file/${fileId}/view`;
+  }
+
   export const getComments = async(taskId) => {
     try{
       const data = await fetchApi(`/api/v1/task/comment/${taskId}`)

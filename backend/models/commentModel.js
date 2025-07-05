@@ -15,6 +15,36 @@ const commentSchema = new mongoose.Schema({
     type: String,
     require: true,
   },
+  attachments: [{
+    fileName: {
+      type: String,
+      required: true
+    },
+    originalName: {
+      type: String,
+      required: true
+    },
+    filePath: {
+      type: String,
+      required: true
+    },
+    fileSize: {
+      type: Number,
+      required: true
+    },
+    fileType: {
+      type: String,
+      required: true
+    },
+    mimeType: {
+      type: String,
+      required: true
+    },
+    uploadedAt: {
+      type: Date,
+      default: Date.now
+    }
+  }]
 },
 {
   timestamps: true,

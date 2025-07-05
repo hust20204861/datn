@@ -108,7 +108,7 @@
       <div class="w-full h-full relative flex flex-col">
         <h1 class="text-[24px] font-semibold p-2">Comments</h1>
         <div ref="chatContainer"
-          class="w-full h-[calc(100%-130px)] overflow-hidden overflow-y-auto border-[1px] border-black rounded-md p-3 space-y-3"
+          class="w-full h-[calc(100%-180px)] overflow-hidden overflow-y-auto border-[1px] border-black rounded-md p-3 space-y-3"
         >
           <div v-for="(comment, index) in comments.comments" :key="index">
             <div
@@ -129,30 +129,90 @@
               </div>
 
               <div
-                class="flex justify-start items-center bg-blue-400 p-2 px-4 rounded-lg max-w-[600px] break-words text-[16px]"
+                class="flex flex-col justify-start items-start bg-blue-400 p-2 px-4 rounded-lg max-w-[600px] break-words text-[16px]"
                 :class="
                   comment.author._id == userID ? 'bg-green-200' : 'bg-blue-200'
                 "
               >
-                {{ comment.content }}
+                <!-- Text content -->
+                <div v-if="comment.content" class="mb-2">
+                  {{ comment.content }}
+                </div>
+                
+                <!-- File attachments -->
+                <div v-if="comment.attachments && comment.attachments.length > 0" class="space-y-2">
+                  <div v-for="attachment in comment.attachments" :key="attachment._id" 
+                       class="flex items-center space-x-2 p-2 bg-white bg-opacity-50 rounded-md">
+                    <!-- File icon based on type -->
+                    <div class="flex-shrink-0">
+                      <IconFile v-if="attachment.fileType === 'document'" size="20" class="text-red-500" />
+                      <IconPhoto v-else-if="attachment.fileType === 'image'" size="20" class="text-green-500" />
+                      <IconArchive v-else-if="attachment.fileType === 'archive'" size="20" class="text-yellow-500" />
+                      <IconFileText v-else size="20" class="text-blue-500" />
+                    </div>
+                    
+                    <!-- File info -->
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm font-medium truncate">{{ attachment.originalName }}</p>
+                      <p class="text-xs text-gray-500">{{ formatFileSize(attachment.fileSize) }}</p>
+                    </div>
+                    
+                    <!-- Download button -->
+                    <button @click="downloadFile(comment._id, attachment._id)" 
+                            class="flex-shrink-0 p-1 hover:bg-gray-200 rounded">
+                      <IconDownload size="16" class="text-gray-600" />
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div class="w-full flex items-center absolute bottom-1">
-          <textarea
-            v-model="content"
-            placeholder="Comment here"
-            class="w-full flex items-center p-2 border-[1px] border-gray-400 focus:outline-none focus:border-black rounded-xl"
-            row="1"
-             @keydown.enter.prevent="commentTask"
-          ></textarea>
-          <IconSend2
-            size="24"
-            @click="commentTask"
-            class="text-blue-500 absolute right-4"
-          />
+        <!-- File preview area -->
+        <div v-if="selectedFiles.length > 0" class="w-full max-h-16 overflow-y-auto border-[1px] border-gray-300 rounded-md p-2 mb-2">
+          <div class="flex flex-wrap gap-2">
+            <div v-for="(file, index) in selectedFiles" :key="index" 
+                 class="flex items-center space-x-2 bg-gray-100 p-1 rounded text-sm">
+              <span class="truncate max-w-[100px]">{{ file.name }}</span>
+              <button @click="removeFile(index)" class="text-red-500 hover:text-red-700">
+                <IconX size="16" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Comment input with file upload -->
+        <div class="w-full flex flex-col space-y-2 absolute bottom-1">
+          <div class="w-full flex items-center">
+            <textarea
+              v-model="content"
+              placeholder="Comment here"
+              class="w-full flex items-center p-2 border-[1px] border-gray-400 focus:outline-none focus:border-black rounded-xl pr-20"
+              row="1"
+              @keydown.enter.prevent="commentTask"
+            ></textarea>
+            
+            <!-- File upload button -->
+            <button @click="triggerFileInput" 
+                    class="absolute right-12 p-1 hover:bg-gray-100 rounded-full">
+              <IconPaperclip size="20" class="text-gray-500" />
+            </button>
+            
+            <!-- Send button -->
+            <button @click="commentTask" 
+                    class="absolute right-4 p-1 hover:bg-gray-100 rounded-full">
+              <IconSend2 size="20" class="text-blue-500" />
+            </button>
+          </div>
+          
+          <!-- Hidden file input -->
+          <input ref="fileInput" 
+                 type="file" 
+                 multiple 
+                 accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.rar,.7z"
+                 @change="onFileSelect"
+                 style="display: none" />
         </div>
       </div>
     </div>
@@ -169,10 +229,24 @@ import {
   IconHourglassEmpty,
   IconX,
   IconSend2,
-  IconPlus
+  IconPlus,
+  IconPaperclip,
+  IconFile,
+  IconPhoto,
+  IconArchive,
+  IconFileText,
+  IconDownload
 } from "@tabler/icons-vue";
 
-import { getTaskDetail, getComments, createComment, updateTask, deleteTask } from "@/api/fetchApi";
+import { 
+  getTaskDetail, 
+  getComments, 
+  createComment, 
+  createCommentWithFiles,
+  updateTask, 
+  deleteTask,
+  downloadFile as downloadFileApi
+} from "@/api/fetchApi";
 import CreateTaskModal from "../modals/CreateTaskModal.vue";
 
 import socket from "@/api/socket";
@@ -185,6 +259,12 @@ export default {
     IconX,
     IconSend2,
     IconPlus,
+    IconPaperclip,
+    IconFile,
+    IconPhoto,
+    IconArchive,
+    IconFileText,
+    IconDownload,
     CreateTaskModal
   },
   setup() {
@@ -194,6 +274,8 @@ export default {
     const comments = ref([]);
     const status = ref('')
     const content = ref('')
+    const selectedFiles = ref([])
+    const fileInput = ref(null)
     const route = useRoute()
 
     const chatContainer = ref(null);
@@ -204,22 +286,20 @@ export default {
       }
     };
 
-        onMounted(() => {
-          init()
-        })
+    onMounted(() => {
+      init()
+    })
 
-        const init = () => {
-            emitter.on('*', (type, ev) => {
-                switch (type) {
-                    case 'TASK_DETAILS':
-                      console.log(ev)
-                        taskDetail(ev.taskId)
-                        break
-
-                }
-            })
-
+    const init = () => {
+      emitter.on('*', (type, ev) => {
+        switch (type) {
+          case 'TASK_DETAILS':
+            console.log(ev)
+            taskDetail(ev.taskId)
+            break
         }
+      })
+    }
 
     const taskDetail = async (taskId) => {
       const response = await getTaskDetail(taskId);
@@ -249,21 +329,101 @@ export default {
           });
         }
       });
-
     };
 
     const closeTaskDetail = () => {
-        emitter.emit('CLOSE_TASK_DETAILS')
+      emitter.emit('CLOSE_TASK_DETAILS')
     };
+    
     const userID = localStorage.getItem("userID");
+
+    // File upload functions
+    const triggerFileInput = () => {
+      fileInput.value.click();
+    };
+
+    const onFileSelect = (event) => {
+      const files = Array.from(event.target.files);
+      selectedFiles.value = [...selectedFiles.value, ...files];
+      // Clear the input so the same file can be selected again
+      event.target.value = '';
+    };
+
+    const removeFile = (index) => {
+      selectedFiles.value.splice(index, 1);
+    };
+
+    const formatFileSize = (bytes) => {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    };
+
+    const downloadFile = async (commentId, fileId) => {
+      try {
+        await downloadFileApi(commentId, fileId);
+      } catch (error) {
+        console.error('Error downloading file:', error);
+        emitter.emit('NOTIFICATION', {
+          status: 'failed',
+          message: 'Failed to download file'
+        });
+      }
+    };
 
     const commentTask = async () => {
       const taskId = Id.value;
-      const data = await createComment({ content: content.value, taskId });
-      if(data.error == null){
+      
+      // Check if we have content or files
+      if (!content.value.trim() && selectedFiles.value.length === 0) {
+        emitter.emit('NOTIFICATION', {
+          status: 'failed',
+          message: 'Please enter content or select files'
+        });
+        return;
+      }
+
+      try {
+        let response;
+        
+        if (selectedFiles.value.length > 0) {
+          // Use file upload API
+          response = await createCommentWithFiles({ 
+            content: content.value, 
+            taskId, 
+            files: selectedFiles.value 
+          });
+        } else {
+          // Use regular comment API
+          response = await createComment({ 
+            content: content.value, 
+            taskId 
+          });
+        }
+
+        if (response.status === 'success' || response.error === null) {
           taskDetail(taskId);
-          content.value = ''
-      }else return
+          content.value = '';
+          selectedFiles.value = [];
+          emitter.emit('NOTIFICATION', {
+            status: 'success',
+            message: 'Comment posted successfully'
+          });
+        } else {
+          emitter.emit('NOTIFICATION', {
+            status: 'failed',
+            message: response.error || 'Failed to post comment'
+          });
+        }
+      } catch (error) {
+        console.error('Error posting comment:', error);
+        emitter.emit('NOTIFICATION', {
+          status: 'failed',
+          message: 'Failed to post comment'
+        });
+      }
     };
 
     const UpdateTask = async(taskId, status) => {
@@ -271,6 +431,7 @@ export default {
       emitter.emit('NOTIFICATION', data)
       return
     }
+    
     const DeleteTask = async(taskId) => {
       const data = await deleteTask(taskId);
       emitter.emit('NOTIFICATION', data)
@@ -284,44 +445,47 @@ export default {
     }
 
     const getDate = (time) => {
-        const date = new Date(time);
-
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0'); 
-        const day = String(date.getDate()).padStart(2, '0');       
-        const hours = String(date.getHours()).padStart(2, '0');    
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        const seconds = String(date.getSeconds()).padStart(2, '0');
-
-        return `${hours}:${minutes}:${seconds}  ${day}-${month}-${year}`
+      const date = new Date(time);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0'); 
+      const day = String(date.getDate()).padStart(2, '0');       
+      const hours = String(date.getHours()).padStart(2, '0');    
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      const seconds = String(date.getSeconds()).padStart(2, '0');
+      return `${hours}:${minutes}:${seconds}  ${day}-${month}-${year}`
     }
+    
     const getTime = (time) => {
-        const date = new Date(time);
-
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0'); 
-        const day = String(date.getDate()).padStart(2, '0');       
-        const hours = String(date.getHours()).padStart(2, '0');    
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        const seconds = String(date.getSeconds()).padStart(2, '0');
-
-        return `${hours}:${minutes}`
+      const date = new Date(time);
+      const hours = String(date.getHours()).padStart(2, '0');    
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      return `${hours}:${minutes}`
     }
+
     return {
-      taskDetail,
-      data,
       onTaskDetails,
-      closeTaskDetail,
+      Id,
+      data,
+      status,
+      content,
       comments,
+      selectedFiles,
+      fileInput,
+      chatContainer,
       userID,
+      closeTaskDetail,
+      taskDetail,
       commentTask,
-      UpdateTask, status, content, route,
+      UpdateTask,
+      DeleteTask,
       toggleTaskModal,
       getDate,
       getTime,
-      DeleteTask,
-      chatContainer,
-      scrollToBottom,
+      triggerFileInput,
+      onFileSelect,
+      removeFile,
+      formatFileSize,
+      downloadFile
     };
   },
 };
