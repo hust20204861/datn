@@ -2,7 +2,7 @@ import fetchApi from "./baseApi";
 
 export const Signin = async ({username, password}) => {
     try{
-      const response = await fetch('http://test.edu/manager_be/api/v1/user/signin', {
+      const response = await fetch('http://test.edu/api/v1/user/signin', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -27,7 +27,7 @@ export const Signin = async ({username, password}) => {
 
 export const Signup = async ({name, username, password}) => {
   try{
-    const response = await fetch('http://test.edu/manager_be/api/v1/user/signup', {
+    const response = await fetch('http://test.edu/api/v1/user/signup', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
