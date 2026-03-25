@@ -1,23 +1,27 @@
 <template>
-    <div class="w-[15%] h-screen left-0">
-        <h1 class="flex justify-center items-center pt-5 pb-5 font-semibold text-[20px]">{{t('9')}}, {{name}}</h1>
-        <div class="p-[20px]">
-            <RouterLink to="/dashboard" :class="{'flex items-center font-bold text-gray-400 hover:text-gray-600 ml-5' : route.path !== '/dashboard',
-                                                 'flex items-center font-bold text-gray-600 hover:text-gray-600 ml-5' : route.path === '/dashboard'}" >
-                                             <IconHome class="mr-2"/>{{t('1')}}</RouterLink>
-        </div>
-        <div class="p-[20px]">
-            <RouterLink to="/projects" :class="{'flex items-center font-bold text-gray-400 hover:text-gray-600 ml-5' : route.path !== '/projects',
-                                             'flex items-center font-bold text-gray-600 hover:text-gray-600 ml-5' : route.path === '/projects'}" >
-                                             <IconChalkboard class="mr-2"/>{{t('2')}}</RouterLink>
-        </div>
-        <div class="p-[20px]">
-            <RouterLink to="/tasks" :class="{'flex items-center font-bold text-gray-400 hover:text-gray-600 ml-5' : route.path !== '/tasks',
-                                             'flex items-center font-bold text-gray-600 hover:text-gray-600 ml-5' : route.path === '/tasks'}" >
-                                             <IconStack3 class="mr-2"/>{{t('3')}}</RouterLink>
-        </div>
-        <div class="p-[20px] absolute bottom-0 flex justify-center w-[15%]">
-            <RouterLink to="/" class="flex items-center justify-center text-gray-400 hover:text-red-500 font-bold"><IconLogout size="24" class="mr-2"/>{{t('8')}}</RouterLink>
+    <div class="w-[10%] h-[94%] left-0 top-[6%] absolute bg-gray-100 ">
+        <div class="w-full h-full flex flex-col justify-between">
+            <div>
+                <div class="p-[10px]">
+                    <RouterLink to="/dashboard" :class="{'flex items-center font-bold text-gray-400 hover:text-gray-600' : route.path !== '/dashboard',
+                                                        'flex items-center font-bold text-gray-600 hover:text-gray-600' : route.path === '/dashboard'}" >
+                                                    <IconHome class="mr-2"/>{{t('1')}}</RouterLink>
+                </div>
+                <div class="p-[10px]">
+                    <RouterLink to="/projects" :class="{'flex items-center font-bold text-gray-400 hover:text-gray-600' : route.path !== '/projects',
+                                                    'flex items-center font-bold text-gray-600 hover:text-gray-600' : route.path === '/projects'}" >
+                                                    <IconChalkboard class="mr-2"/>{{t('2')}}</RouterLink>
+                </div>
+                <div class="p-[10px]">
+                    <RouterLink to="/tasks" :class="{'flex items-center font-bold text-gray-400 hover:text-gray-600' : route.path !== '/tasks',
+                                                    'flex items-center font-bold text-gray-600 hover:text-gray-600' : route.path === '/tasks'}" >
+                                                    <IconStack3 class="mr-2"/>{{t('3')}}</RouterLink>
+                </div>  
+            </div>
+
+            <div class="p-[15px] bottom-0 left-0">
+                <RouterLink to="/" class="flex items-center justify-start text-gray-400 hover:text-red-500 font-bold"><IconLogout size="24" class="mr-2"/>{{t('8')}}</RouterLink>
+            </div>
         </div>
     </div>
 </template>

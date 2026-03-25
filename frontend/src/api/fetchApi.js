@@ -10,14 +10,10 @@ export const Signin = async ({username, password}) => {
       body: JSON.stringify({ username, password }),
     });
     const data = await response.json();
-    // console.log("DATA SIGNIN", data)
     if (response.ok && data.status === 'success') {
       localStorage.setItem('accessToken', data.accessToken);
     }
-    // if (response.ok && data.status === 'signin failed') {
-    //     alert(data.error)
-    //   }
-      return data;
+    return data;
 
   }catch(error){
     console.error('Sign error:', error.message);
@@ -35,15 +31,13 @@ export const Signup = async ({name, username, password}) => {
     body: JSON.stringify({ name, username, password }),
   });
   const data = await response.json();
-  // console.log("DATA SIGNUP", data)
-  if (response.ok && data.status === 'success') {
-    alert("SIGNUP SUCCESS")
-  }
-  if (response.ok && data.status === 'signin failed') {
+    if (response.ok && data.status === 'success') {
+    }
+    if (response.ok && data.status === 'signin failed') {
       alert(data.error)
     }
+    
     return data;
-
 }catch(error){
   console.error('Sign error:', error.message);
   throw error;

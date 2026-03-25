@@ -12,18 +12,11 @@
 </template>
 
 <script>
-import { ref, watch, computed, onMounted } from 'vue';
-import { useI18n } from 'vue-i18n';
-import emitter from '@/emitter';
+import { onMounted } from 'vue';
 
 import BaseLayout from '@/components/layout/BaseLayout.vue';
-
 import ProjectHeader from '@/components/header/ProjectHeader.vue';
-
 import ProjectComponent from '@/components/class/ProjectComponent.vue';
-
-import { getProjectsManager, getProjectsMember } from '@/api/fetchApi';
-
 
 export default {
     components: {

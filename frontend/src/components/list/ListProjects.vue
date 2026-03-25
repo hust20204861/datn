@@ -22,19 +22,17 @@
 
 <script>
 import { RouterLink } from 'vue-router';
-import { computed, onMounted, onUnmounted, ref } from 'vue';
-import { IconClockHour4, IconHourglassEmpty, IconTrash } from '@tabler/icons-vue'
-
+import { onMounted, ref } from 'vue';
 import emitter from '@/emitter';
 
-import { getProjectsManager, getProjectsMember } from '@/api/fetchApi';
+import { getProjectsManager, deleteProject } from '@/api/fetchApi';
 
-import { getProjectTask, deleteProject } from '@/api/fetchApi';
+import { IconClockHour4, IconHourglassEmpty, IconTrash } from '@tabler/icons-vue'
+
 import Notification from '../modals/Notification.vue';
 import TaskComponent from '../class/TaskComponent.vue';
 import ProjectManager from './ProjectManager.vue';
 import CreateTaskModal from '../modals/CreateTaskModal.vue';
-
 import TaskDetailsVue from '../task/TaskDetails.vue';
 
 export default {

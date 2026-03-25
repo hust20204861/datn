@@ -1,12 +1,12 @@
 <template>
     <div class="flex items-center">
-        <div class="flex flex-row justift-center items-center absolute left-[5%]">
-            <h1 class="font-bold text-[3rem]">{{name}}</h1>
-            <button @click.prevent="toggleProfile">
-                <IconEdit class="mt-[22px] ml-2"/>
+        <div class="flex flex-row justift-center items-center absolute left-4">
+            <h1 class="font-bold text-[1.5rem] mr-1">{{name}}</h1>
+            <button @click.prevent="toggleProfile" class="w-4 h-4 flex items-start justify-center">
+                <IconEdit class=""/>
             </button>
         </div>
-        <Language class="absolute left-[90%] top-1/2 -translate-y-1/2"/>
+        <Language class="absolute left-[93%] top-1/2 -translate-y-1/2"/>
     </div>
 </template>
 

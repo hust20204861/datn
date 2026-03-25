@@ -1,14 +1,14 @@
 <template>  
     <div class="flex justify-center items-center rounded-full">
         <div v-if="currentLanguage==='vi'" class="flex items-center">
-            <button @click="changeLanguage('en')" class="w-[50px] h-[50px] rounded-full bg-teal-500 hover:bg-teal-600 text-white font-semibold mr-2" >
+            <button @click="changeLanguage('en')" class="w-[30px] h-[30px] rounded-full bg-teal-500 hover:bg-teal-600 text-white font-semibold mr-2" >
                 <img src="../../assets/vietnamflag.png" alt="" class="w-full h-full rounded-full object-cover">
             </button>
             <p class="font-semibold">{{ $t('11') }}</p>
         </div>
 
         <div v-if="currentLanguage==='en'" class="flex items-center">
-            <button @click="changeLanguage('vi')" class="w-[50px] h-[50px] rounded-full bg-teal-500 hover:bg-teal-600 text-white font-semibold mr-2" >
+            <button @click="changeLanguage('vi')" class="w-[30px] h-[30px] rounded-full bg-teal-500 hover:bg-teal-600 text-white font-semibold mr-2" >
                 <img src="../../assets/usflag.png" alt="" class="w-full h-full rounded-full object-cover">
             </button>
             <p class="font-semibold">{{ $t('10') }}</p>

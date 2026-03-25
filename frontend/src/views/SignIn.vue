@@ -66,7 +66,7 @@ export default {
       if(data.status === 'success'){
         localStorage.setItem('name', data.data.name)
         localStorage.setItem('userID', data.data._id)
-        router.push('/projects')
+        router.push('/dashboard')
       }
       // if(data.status === 'failed'){
       //   alert(data.error)
