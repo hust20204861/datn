@@ -1,4 +1,4 @@
-const baseUrl = 'http://localhost:2024';
+const baseUrl = 'http://test.edu/manager_be';
 
 const fetchApi = async (url, method = 'GET', body = null) => {
   const token = localStorage.getItem('accessToken');
